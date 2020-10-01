@@ -44,23 +44,27 @@ The current firmware is based on:
 ***
 ## Installation
 1. With the machine off remove the back panel and short the jumper JP1 or J37 depending on model.  Some Boards do not have jumper pins exposed but can still be shorted with a conductive wire.
-2. Turn the machine on and wait a few seconds then turn it off again.  The machine will have been flashed removing the current stock firmware and allowing it to be detected as a normal arduino DUE. NOTE: Windows users may need to install drivers to detect the board.  Consult the Voltivo forums.   
+2. Turn the machine on and wait a few seconds then turn it off again.  The machine will have been flashed removing the current stock firmware and allowing it to be detected as a normal arduino DUE. The LCD screen will show two black bar at this point which is normal since the stock firmware is removed.  
 Note : points 1 and 2 are only needed to wipe the stock fw or a corrupted fw, for update they are not necessary.
 Note 2: remove the jumper before flashing if still there
+
 3. Use an arduino IDE supporting arduino DUE, [1.8.13](https://www.arduino.cc/en/Main/Software) with Arduino SAM Boards (32-bits ARM Cortex-M3) 1.6.12 Arduino Due module from board manager 
 4. Update variants.cpp and USBCore.cpp arduino files under your user folder with the ones present in "\src\ArduinoDUE\AdditionalArduinoFiles\Da Vinci 1.0 - Arduino IDE 1.8.13 -Due 1.8.3\Arduino15\packages\arduino\hardware\sam\1.6.12". For windows 10, the target file to be replaced is located under C:\Users\[Your username]\AppData\Local\Arduino15\packages\arduino\hardware\sam\1.6.12 
+
 5. Open the project file named repetier.ino located in src\ArduinoDUE\Repetier directory in the arduino IDE. 
 6. Modify the DAVINCI define in Configuration.h file to match your targeted Da Vinci.  See below.
 7. Under the tools menu select the board type as Arduino DUE (Native USB Port) and the proper port you have connected to the printer.  NOTE: You can usually find this out by looking at the tools -> port menu both before and after plugging in the printer to your computer's USB.
 8. Press the usual arduino compile and upload button.    
-If done correctly you will see the arduino sketch compile successfully and output in the log showing the upload status.
-9. Once flash is done : restart printer         
+If done correctly you will see the arduino sketch compile successfully and output in the log showing the upload status. You will have to turn off Cura or Repetier host or anything that connecting to printer through USB port. Otherwise upload will fail due to unable to lock on USB port.
+9. Once flash is done : restart printer, the black bar should goes away and repetier-firmware menu should shows up.         
 
 If you have black bars and printer is not detected properly, it means you did not do the point 4 properly, so go back to point 4. and make sure you copy the two file to right directory.    
 
-10. After printer restarted <B>do not forget to send G-Code M502 then M500 </B>from repetier's Print Panel tab <B>or from the printer menu "Settings/Load Fail-Safe"</B> and accept to save the new eeprom settings.    
-11. When update is complete <B>you must calibrate your bed height!</B>Use manual bed leveling in menu   
-12. Next you can calibrate your filament as usual, and second extruder offset if you have.   
+10. After printer restarted, from the printer menu "Settings/Load Fail-Safe"</B> and accept to save the new eeprom settings. If you forget to do this, the printer will boot normally and repond to lcd operations but will not move axises and heat up nozzle and bed.   
+
+11. When update is complete <B>you must relevel your bed!</B>Use manual bed leveling in menu
+   
+12. Next you can calibrate your filament flow rate as usual, and second extruder offset if you have.   
 
 Do not forget to modify the configuration.h to match your targeted Da Vinci: 1.0, 2.0 SF or 2.0.   
 
