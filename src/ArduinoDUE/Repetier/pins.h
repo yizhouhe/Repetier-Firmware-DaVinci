@@ -1991,24 +1991,25 @@ AD15 CH15
 #define SDSUPPORT true
 #define SDPOWER -1
 // PA28
-#define SDSS 77
+#define SDSS 4
 // PA29
-#define ORIG_SDCARDDETECT 87
+#define ORIG_SDCARDDETECT 14
 #define SDCARDDETECTINVERTED false
 #define LED_PIN -1
 
 // 92(orig) // PA5
-#define ORIG_FAN_PIN 92
+#define ORIG_FAN_PIN 9
 // 31(orig) // PA7
-#define ORIG_FAN2_PIN 31
+#define ORIG_FAN2_PIN 8
+//Davinci 0 Specific
 #define ORIG_PS_ON_PIN -1
-#define KILL_PIN ORIG_X_MIN_PIN
+#define KILL_PIN -1
 #define SUICIDE_PIN \
     -1 // PIN that has to be turned on right after start, to keep power flowing.
 #define HEAT_OFF_INT_PIN 50
 
-#define SDA_PIN -1 // i2c not used
-#define SCL_PIN -1 // i2c not used
+#define SDA_PIN 20 // i2c not used
+#define SCL_PIN 21 // i2c not used
 
 // PC9
 #define CASE_LIGHTS_PIN 41
@@ -2047,9 +2048,23 @@ AD15 CH15
 #define EEPROM_AVAILABLE EEPROM_SPI_ALLIGATOR
 #endif
 
+
+/*****************************************************************
+ * Da Vinci 1.0 Mainboard
+ * http://www.3dartists.org/
+ ******************************************************************/
+//
+
 #if MOTHERBOARD == 999
 #define KNOWN_BOARD
 #include "userpins.h"
+//Davinci 0 Specific
+#else
+#define LIGHT_PIN    -1
+#define BADGE_LIGHT_PIN   -1
+//#define TOP_SENSOR_PIN    -1
+//#define FIL_SENSOR1_PIN   -1
+//#define FIL_SENSOR2_PIN   -1
 #endif
 
 #ifndef SDSSORIG
@@ -2068,6 +2083,11 @@ AD15 CH15
 #if NUM_EXTRUDER < 2
 #undef E1_PINS
 #define E1_PINS
+//Davinci Specific, second extruder pins are in sensitive pins
+  #undef HEATER_2_PIN
+  #define HEATER_2_PIN -1
+  #undef TEMP_2_PIN
+  #define TEMP_2_PIN -1
 #endif
 
 #if NUM_EXTRUDER < 3
@@ -2078,6 +2098,11 @@ AD15 CH15
 #ifndef HEATER_PINS_INVERTED
 #define HEATER_PINS_INVERTED 0
 #endif
+
+// add to get rid of error message DaVinci specific?
+#define SDA_PIN 20
+#define SCL_PIN 21
+///
 
 // Available chip select pins for HW SPI are 4 10 52
 #if (SDSS == 4) || (SDSS == 10) || (SDSS == 52) || (SDSS == 77)
@@ -2101,24 +2126,29 @@ AD15 CH15
 #define MOSI_PIN 75
 #define MISO_PIN 74
 #define SCK_PIN 76
+
 //#define DUE_SOFTWARE_SPI
+//Davinci Specific, SD Card pins are defined in Userpins.h
 #else
-#ifndef NONSTANDARD_SDSS
-#define DUE_SOFTWARE_SPI
-#define SPI_PIN SDSS
-#endif
-/* could be any pin with software */
-#ifndef MOSI_PIN
-#define MOSI_PIN 51
-#endif
-#ifndef MISO_PIN
-#define MISO_PIN 50
-#endif
-#ifndef SCK_PIN
-#define SCK_PIN 52
-#endif
+  #if MOTHERBOARD != 999
+  //#ifndef NONSTANDARD_SDSS
+    #define DUE_SOFTWARE_SPI
+  /* could be any pin with software */
+    #ifndef MOSI_PIN
+    #define MOSI_PIN    51
+    #endif
+    #ifndef MISO_PIN
+    #define MISO_PIN    50
+    #endif
+    #ifndef SCK_PIN
+    #define SCK_PIN     52
+    #endif
+  #endif
 
 #endif
+          
+
+
 
 // Original pin assignmats to be used in configuration tool
 #define X_STEP_PIN ORIG_X_STEP_PIN
@@ -2175,12 +2205,7 @@ AD15 CH15
 #endif
 #define SDCARDDETECT ORIG_SDCARDDETECT
 
-#define SENSITIVE_PINS \
-    { \
-        0, 1, X_STEP_PIN, X_DIR_PIN, X_ENABLE_PIN, X_MIN_PIN, X_MAX_PIN, \
-            Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN, Y_MIN_PIN, Y_MAX_PIN, Z_STEP_PIN, \
-            Z_DIR_PIN, Z_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, \
-            ORIG_PS_ON_PIN, HEATER_0_PIN, HEATER_1_PIN, FAN_PIN, \
-            E0_PINS E1_PINS E2_PINS TEMP_0_PIN, TEMP_1_PIN, SDSS \
-    }
+//Davinci Specific, sensitive pins need second extruder pins
+#define SENSITIVE_PINS {0, 1, X_STEP_PIN, X_DIR_PIN, X_ENABLE_PIN, X_MIN_PIN, X_MAX_PIN, Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN, Y_MIN_PIN, Y_MAX_PIN, Z_STEP_PIN, Z_DIR_PIN, Z_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, ORIG_PS_ON_PIN, \
+                        HEATER_0_PIN, HEATER_1_PIN, HEATER_2_PIN,FAN_PIN, E0_PINS E1_PINS E2_PINS TEMP_0_PIN, TEMP_1_PIN, TEMP_2_PIN, SDSS }
 #endif

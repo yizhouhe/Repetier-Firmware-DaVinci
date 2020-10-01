@@ -60,6 +60,12 @@ HAL::~HAL() {
     // dtor
 }
 
+//Davinci Specific
+#if FEATURE_BEEPER
+  bool HAL::enablesound = true;
+#endif
+
+
 // Set up all timer interrupts
 void HAL::setupTimer() {
     uint32_t tc_count, tc_clock;
@@ -428,6 +434,8 @@ int HAL::getFreeRam() {
 
 // Reset peripherals and cpu
 void HAL::resetHardware() {
+    //Davinci Specific, fancy effect
+    playsound (1000,400);
     RSTC->RSTC_CR = RSTC_CR_KEY(0xA5) | RSTC_CR_PERRST | RSTC_CR_PROCRST;
 }
 

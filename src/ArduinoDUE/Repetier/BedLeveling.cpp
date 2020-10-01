@@ -195,18 +195,30 @@ bool measureAutolevelPlane(Plane& plane) {
                     IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
     h = Printer::runZProbe(false, false);
     if (h == ILLEGAL_Z_PROBE)
+        //Davinci Specific
+          Printer::Z_probe[0]=-2000; 
+          Printer::zprobe_ok = false;
+        //End Davinci
         return false;
     builder.addPoint(EEPROM::zProbeX1(), EEPROM::zProbeY1(), h);
     Printer::moveTo(EEPROM::zProbeX2(), EEPROM::zProbeY2(), IGNORE_COORDINATE,
                     IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
     h = Printer::runZProbe(false, false);
     if (h == ILLEGAL_Z_PROBE)
+        //Davinci Specific
+          Printer::Z_probe[1]=-2000; 
+          Printer::zprobe_ok = false;
+        //End Davinci
         return false;
     builder.addPoint(EEPROM::zProbeX2(), EEPROM::zProbeY2(), h);
     Printer::moveTo(EEPROM::zProbeX3(), EEPROM::zProbeY3(), IGNORE_COORDINATE,
                     IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
     h = Printer::runZProbe(false, false);
     if (h == ILLEGAL_Z_PROBE)
+          //Davinci Specific
+              Printer::Z_probe[2]=-2000; 
+              Printer::zprobe_ok = false;
+          //End Davinci
         return false;
     builder.addPoint(EEPROM::zProbeX3(), EEPROM::zProbeY3(), h);
 #elif BED_LEVELING_METHOD == 1 // linear regression

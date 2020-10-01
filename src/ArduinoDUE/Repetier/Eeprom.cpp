@@ -25,6 +25,39 @@
 
 #include "Repetier.h"
 
+//Davinci Specific
+//internal usage of update value
+void EEPROM:: update(long P,uint8_t T,long S,float X)
+{
+#if EEPROM_MODE!=0
+    if(T>=0 &&T<=3 && P>0 && P<=EEPROM_BYTES) // Minimum size used by Eeprom.cpp
+    switch(T)
+        {
+        case EPR_TYPE_BYTE:
+            HAL::eprSetByte(P,(uint8_t)S);
+            break;
+        case EPR_TYPE_INT:
+           HAL::eprSetInt16(P,(int)S);
+            break;
+        case EPR_TYPE_LONG:
+            HAL::eprSetInt32(P,(int32_t)S);
+            break;
+        case EPR_TYPE_FLOAT:
+           HAL::eprSetFloat(P,X);
+            break;
+        }
+    uint8_t newcheck = computeChecksum();
+    if(newcheck != HAL::eprGetByte(EPR_INTEGRITY_BYTE))
+        HAL::eprSetByte(EPR_INTEGRITY_BYTE,newcheck);
+    readDataFromEEPROM(true);
+    //Extruder::selectExtruderById(Extruder::current->id);
+#else
+    Com::printErrorF(Com::tNoEEPROMSupport);
+#endif
+}
+
+//end davinci specific
+
 void EEPROM::update(GCode *com) {
 #if EEPROM_MODE != 0
   if (com->hasT() && com->hasP())
@@ -356,6 +389,30 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration() {
   Com::printErrorFLN(Com::tNoEEPROMSupport);
 #endif
 }
+
+//Davinci Specific
+#if DAVINCI == 4
+  float EEPROM::rotate_speed = TURNTABLE_DEFAULT_SPEED;
+#endif
+bool EEPROM::buselight = false;
+bool EEPROM::busebadgelight = false;
+bool EEPROM::busesensor = false;
+bool EEPROM::btopsensor = false;
+bool EEPROM::bkeeplighton = true;
+float EEPROM::ftemp_ext_pla = UI_SET_PRESET_EXTRUDER_TEMP_PLA;
+float EEPROM::ftemp_ext_abs = UI_SET_PRESET_EXTRUDER_TEMP_ABS;
+float EEPROM::ftemp_bed_pla = UI_SET_PRESET_HEATED_BED_TEMP_PLA;
+float EEPROM::ftemp_bed_abs = UI_SET_PRESET_HEATED_BED_TEMP_ABS;
+float EEPROM::loading_feed_rate = UI_SET_PRESET_LOADING_FEEDRATE;
+float EEPROM::unloading_feed_rate = UI_SET_PRESET_UNLOADING_FEEDRATE;
+float EEPROM::unloading_loading_distance = UI_SET_PRESET_UNLOAD_LOAD_DISTANCE;
+
+#if UI_AUTOLIGHTOFF_AFTER != 0
+  millis_t EEPROM::timepowersaving = 1000 * 60 * 30; //30 min
+#else
+  millis_t EEPROM::timepowersaving = 0; 
+#endif
+//end da vinci specific
 
 void EEPROM::storeDataIntoEEPROM(uint8_t corrupted) {
 #if EEPROM_MODE != 0

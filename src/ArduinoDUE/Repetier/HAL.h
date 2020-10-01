@@ -350,6 +350,15 @@ public:
     HAL();
     virtual ~HAL();
 
+    //Davinci Specific
+    #if FEATURE_BEEPER
+        static bool enablesound;
+    #endif //FEATURE_BEEPER
+    #if ENABLE_WIFI
+        static bool bwifion;
+    #endif //wifi feature
+
+
     // Try to initialize pinNumber as hardware PWM. Returns internal
     // id if it succeeds or -1 if it fails. Typical reasons to fail
     // are no pwm support for that pin or an other pin uses same PWM
@@ -451,6 +460,10 @@ public:
 #if defined(BEEPER_PIN) && BEEPER_PIN > -1
         // set up timer counter 1 channel 0 to generate interrupts for
         // toggling output pin.
+        //Davinci Specific
+        #if FEATURE_BEEPER
+              if (!enablesound)return;
+        #endif
         SET_OUTPUT(BEEPER_PIN);
         tone_pin = pin;
         pmc_set_writeprotect(false);

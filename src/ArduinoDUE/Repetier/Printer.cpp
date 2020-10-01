@@ -18,11 +18,24 @@
 
 #include "Repetier.h"
 
+//Davinci Specific, for fancy effects
+extern void playsound(int tone,int duration);
+//end davinci specific
+
 #if USE_ADVANCE
 ufast8_t Printer::maxExtruderSpeed;        ///< Timer delay for end extruder speed
 volatile int Printer::extruderStepsNeeded; ///< This many extruder steps are still needed, <0 = reverse steps needed.
 //uint8_t Printer::extruderAccelerateDelay;     ///< delay between 2 speec increases
 #endif
+
+//Davinci specific, for communication between GCODE command and printer menu  
+#if FEATURE_Z_PROBE
+bool Printer::zprobe_ok=true;
+float Printer::Z_probe[3]={-1000,-1000,-1000};
+#endif
+//end davinci specific
+
+
 uint8_t Printer::unitIsInches = 0; ///< 0 = Units are mm, 1 = units are inches.
 //Stepper Movement Variables
 float Printer::axisStepsPerMM[E_AXIS_ARRAY] = { XAXIS_STEPS_PER_MM, YAXIS_STEPS_PER_MM, ZAXIS_STEPS_PER_MM, 1 }; ///< Number of steps per mm needed.
@@ -72,6 +85,17 @@ uint8_t Printer::flag0 = 0;
 uint8_t Printer::flag1 = 0;
 uint8_t Printer::flag2 = 0;
 uint8_t Printer::flag3 = 0;
+
+//Davinci Specific
+bool Printer::btop_Cover_open=false;
+//Davinci Specific, extra modes
+uint8_t Printer::menuModeEx = 0;
+//Davinci Specific, memorize used extruder for Duo
+#if NUM_EXTRUDER>1
+  uint Printer::lastextruderID;
+#endif
+//end Davinci specific
+
 uint8_t Printer::debugLevel = 6; ///< Bitfield defining debug output. 1 = echo, 2 = info, 4 = error, 8 = dry run., 16 = Only communication, 32 = No moves
 fast8_t Printer::stepsPerTimerCall = 1;
 uint16_t Printer::menuMode = 0;
@@ -105,39 +129,44 @@ int32_t Printer::advanceExecuted; ///< Executed advance steps
 int Printer::advanceStepsSet;
 #endif
 #if NONLINEAR_SYSTEM
-int32_t Printer::maxDeltaPositionSteps;
-floatLong Printer::deltaDiagonalStepsSquaredA;
-floatLong Printer::deltaDiagonalStepsSquaredB;
-floatLong Printer::deltaDiagonalStepsSquaredC;
-float Printer::deltaMaxRadiusSquared;
-float Printer::radius0;
-int32_t Printer::deltaFloorSafetyMarginSteps = 0;
-int32_t Printer::deltaAPosXSteps;
-int32_t Printer::deltaAPosYSteps;
-int32_t Printer::deltaBPosXSteps;
-int32_t Printer::deltaBPosYSteps;
-int32_t Printer::deltaCPosXSteps;
-int32_t Printer::deltaCPosYSteps;
-int32_t Printer::realDeltaPositionSteps[TOWER_ARRAY];
-int16_t Printer::travelMovesPerSecond;
-int16_t Printer::printMovesPerSecond;
+  int32_t Printer::maxDeltaPositionSteps;
+  floatLong Printer::deltaDiagonalStepsSquaredA;
+  floatLong Printer::deltaDiagonalStepsSquaredB;
+  floatLong Printer::deltaDiagonalStepsSquaredC;
+  float Printer::deltaMaxRadiusSquared;
+  float Printer::radius0;
+  int32_t Printer::deltaFloorSafetyMarginSteps = 0;
+  int32_t Printer::deltaAPosXSteps;
+  int32_t Printer::deltaAPosYSteps;
+  int32_t Printer::deltaBPosXSteps;
+  int32_t Printer::deltaBPosYSteps;
+  int32_t Printer::deltaCPosXSteps;
+  int32_t Printer::deltaCPosYSteps;
+  int32_t Printer::realDeltaPositionSteps[TOWER_ARRAY];
+  int16_t Printer::travelMovesPerSecond;
+  int16_t Printer::printMovesPerSecond;
 #endif
+
 #if !NONLINEAR_SYSTEM || defined(FAST_COREXYZ)
-int32_t Printer::xMinStepsAdj, Printer::yMinStepsAdj, Printer::zMinStepsAdj; // adjusted to cover extruder/probe offsets
-int32_t Printer::xMaxStepsAdj, Printer::yMaxStepsAdj, Printer::zMaxStepsAdj;
+  int32_t Printer::xMinStepsAdj, Printer::yMinStepsAdj, Printer::zMinStepsAdj; // adjusted to cover extruder/probe offsets
+  int32_t Printer::xMaxStepsAdj, Printer::yMaxStepsAdj, Printer::zMaxStepsAdj;
 #endif
+
 #if FEATURE_Z_PROBE || MAX_HARDWARE_ENDSTOP_Z || NONLINEAR_SYSTEM
-int32_t Printer::stepsRemainingAtZHit;
+  int32_t Printer::stepsRemainingAtZHit;
 #endif
+
 #if DRIVE_SYSTEM == DELTA
-int32_t Printer::stepsRemainingAtXHit;
-int32_t Printer::stepsRemainingAtYHit;
+  int32_t Printer::stepsRemainingAtXHit;
+  int32_t Printer::stepsRemainingAtYHit;
 #endif
+
 #if SOFTWARE_LEVELING
-int32_t Printer::levelingP1[3];
-int32_t Printer::levelingP2[3];
-int32_t Printer::levelingP3[3];
+  int32_t Printer::levelingP1[3];
+  int32_t Printer::levelingP2[3];
+  int32_t Printer::levelingP3[3];
 #endif
+
 //float Printer::minimumSpeed;               ///< lowest allowed speed to keep integration error small
 //float Printer::minimumZSpeed;
 int32_t Printer::xMaxSteps; ///< For software endstops, limit of move in positive direction.
@@ -241,6 +270,119 @@ TMC2130Stepper* Printer::tmc_driver_e3 = NULL;
 TMC2130Stepper* Printer::tmc_driver_e4 = NULL;
 #endif
 #endif
+
+//Davinci Specific, clean nozzle feature
+#if ENABLE_CLEAN_NOZZLE 
+void Printer::cleanNozzle(bool restoreposition, int8_t extT)
+    {
+    //we save current configuration and position
+    uint8_t tmp_extruderid=Extruder::current->id;
+    float tmp_x = currentPosition[X_AXIS];
+    float tmp_y = currentPosition[Y_AXIS];
+    float tmp_z = currentPosition[Z_AXIS];
+    
+    //ensure homing is done and select E0
+    if(!Printer::isHomedAll()) Printer::homeAxis(true,true,true);
+    else 
+        {//put proper position in case position has been manualy changed no need to home Z as cannot be manualy changed and in case of something on plate it could be catastrophic
+            Printer::homeAxis(true,true,false);
+        }
+    // move Z to zMin + 15 if under this position to be sure nozzle do not touch metal holder
+    if (currentPosition[Z_AXIS] < zMin+15) moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,zMin+15,IGNORE_COORDINATE,homingFeedrate[0]);
+    Commands::waitUntilEndOfAllMoves();
+    UI_STATUS_F(Com::translatedF(UI_TEXT_CLEANING_NOZZLE_ID));
+#if DAVINCI ==1
+    //first step noze
+    moveToReal(xMin+CLEAN_X-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //second step noze
+    moveToReal(xMin-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //third step noze
+    moveToReal(xMin+CLEAN_X-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fourth step noze
+    moveToReal(xMin-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fifth step noze
+    moveToReal(xMin+CLEAN_X-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //sixth step noze
+    moveToReal(xMin-ENDSTOP_X_BACK_ON_HOME,yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //first step Z probe
+    moveToReal(xMin,yMin + CLEAN_Y-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //second step Z probe
+    moveToReal(xMin,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //third step Z probe
+    moveToReal(xMin,yMin+CLEAN_Y-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fourth step Z probe
+    moveToReal(xMin,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fifth step Z probe
+    moveToReal(xMin,yMin+CLEAN_Y-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //sixth step Z probe
+    moveToReal(xMin,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+#endif
+#if DAVINCI ==4 || DAVINCI ==0
+    moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,zMin+3,IGNORE_COORDINATE,homingFeedrate[Z_AXIS]);
+    Commands::waitUntilEndOfAllMoves();
+    //first step noze
+    moveToReal(xMin,yMin+CLEAN_Y-1,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //second step
+    moveToReal(xMin+CLEAN_X,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //third step
+    moveToReal(xMin,yMin+CLEAN_Y,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fourth step
+    moveToReal(xMin+CLEAN_X,yMin+CLEAN_Y+1,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+    //fifth step
+    moveToReal(xMin,yMin+CLEAN_Y+2,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+#endif
+#if DAVINCI ==2 || DAVINCI ==3
+    if(extT == 1 || extT == -1)
+        {
+        //first step
+        moveToReal(xMin + CLEAN_X-ENDSTOP_X_BACK_ON_HOME,yMin + CLEAN_Y-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //second step
+        moveToReal(xMin-ENDSTOP_X_BACK_ON_HOME,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //third step
+        moveToReal(xMin+CLEAN_X-ENDSTOP_X_BACK_ON_HOME,yMin+CLEAN_Y-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //fourth step
+        moveToReal(xMin-ENDSTOP_X_BACK_ON_HOME,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //move out to be sure first drop go to purge box
+        Commands::waitUntilEndOfAllMoves();
+        }
+    if(extT == 0 || extT == -1)
+        {
+        moveToReal(xLength,yMin+10,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        moveToReal(IGNORE_COORDINATE,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //first step
+        moveToReal(xLength-15,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //second step
+        moveToReal(xLength-3,yMin+10,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //third step
+        moveToReal(xLength,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //fourth step  
+        moveToReal(xLength-15,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //fifth step
+        moveToReal(xLength-3,yMin+10,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //sixth step
+        moveToReal(xLength,yMin-ENDSTOP_Y_BACK_ON_HOME,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        //seventh step
+        moveToReal(xLength-15,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        }
+        
+        Commands::waitUntilEndOfAllMoves();
+    //back to original position and original extruder
+        //X,Y first then Z
+    if (restoreposition)
+        {
+        moveToReal(tmp_x,tmp_y,IGNORE_COORDINATE,IGNORE_COORDINATE,homingFeedrate[0]);
+        moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,tmp_z,IGNORE_COORDINATE,homingFeedrate[0]);
+        Commands::waitUntilEndOfAllMoves();
+        Extruder::selectExtruderById(tmp_extruderid);
+        }
+#endif
+    Commands::waitUntilEndOfAllMoves();
+    updateCurrentPosition(true);
+    UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
+    }
+#endif
+
+//end da vinci specific
 
 #if !NONLINEAR_SYSTEM
 void Printer::constrainDestinationCoords() {

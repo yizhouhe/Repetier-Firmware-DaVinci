@@ -674,6 +674,7 @@ inline void memcopy4(void* dest, void* source) {
 #define MENU_MODE_SD_MOUNTED 1
 #define MENU_MODE_SD_PRINTING 2
 #define MENU_MODE_PAUSED 4
+#define MENU_MODE_SD_PAUSED 4
 #define MENU_MODE_FAN_RUNNING 8
 #define MENU_MODE_PRINTING 16
 #define MENU_MODE_FULL_PID 32
@@ -701,6 +702,14 @@ inline void memcopy4(void* dest, void* source) {
 #ifndef KEEP_ALIVE_INTERVAL
 #define KEEP_ALIVE_INTERVAL 2000
 #endif
+
+//Davinci Specific
+#define MENU_MODE_STOP_REQUESTED 1
+#define MENU_MODE_STOP_DONE  2
+#define MENU_MODE_GCODE_PROCESSING  4
+#define MENU_MODE_WIZARD  8
+//end Da Vinci specific
+
 
 #include "HAL.h"
 #ifndef MAX_VFAT_ENTRIES

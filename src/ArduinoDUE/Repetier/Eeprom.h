@@ -127,6 +127,34 @@ have problems with other modules using the eeprom */
 #define EPR_BENDING_CORRECTION_A 1036
 #define EPR_BENDING_CORRECTION_B 1040
 #define EPR_BENDING_CORRECTION_C 1044
+
+//Davinci Specific
+#define EPR_LIGHT_ON 1119
+#define EPR_SOUND_ON 1120
+#define EPR_POWERSAVE_AFTER_TIME 1121
+#define EPR_DISPLAY_MODE 1125
+#define EPR_FIL_SENSOR_ON 1126
+#define EPR_KEEP_LIGHT_ON 1127
+#define EPR_MANUAL_LEVEL_X1 1128
+#define EPR_MANUAL_LEVEL_Y1 1132
+#define EPR_MANUAL_LEVEL_X2 1136
+#define EPR_MANUAL_LEVEL_Y2 1140
+#define EPR_MANUAL_LEVEL_X3 1144
+#define EPR_MANUAL_LEVEL_Y3 1148
+#define EPR_MANUAL_LEVEL_X4 1152
+#define EPR_MANUAL_LEVEL_Y4 1156
+#define EPR_TEMP_EXT_PLA     1160
+#define EPR_TEMP_EXT_ABS     1164
+#define EPR_TEMP_BED_PLA     1168
+#define EPR_TEMP_BED_ABS    1172
+#define EPR_TOP_SENSOR_ON     1176
+#define EPR_WIFI_ON     1177
+#define EPR_BADGE_LIGHT_ON 1178
+#define EPR_LOAD_FEED_RATE 1179
+#define EPR_UNLOAD_FEED_RATE 1183
+#define EPR_UNLOAD_LOAD_DISTANCE 1187
+//end davinci specific
+
 #define EPR_BED_PREHEAT_TEMP 1048
 #define EPR_X2AXIS_STEPS_PER_MM 1052
 #define EPR_PARK_X 1056
@@ -191,6 +219,13 @@ have problems with other modules using the eeprom */
 #define Z_PROBE_BED_DISTANCE 5.0
 #endif
 
+//Davinci Specific
+#define EPR_TYPE_BYTE    0
+#define EPR_TYPE_INT    1
+#define EPR_TYPE_LONG   2
+#define EPR_TYPE_FLOAT    3
+//end davinci specific
+
 class EEPROM {
 #if EEPROM_MODE != 0
   static void writeExtruderPrefix(uint pos);
@@ -206,11 +241,36 @@ public:
 public:
   static void init();
   static void initBaudrate();
+
+    //Davinci Specific
+    #if DAVINCI == 4
+      static float rotate_speed;
+    #endif
+    static bool buselight; 
+    static bool busebadgelight;
+    static bool busesensor;
+    static bool btopsensor;
+    static bool bkeeplighton;
+    static float ftemp_ext_pla;
+    static float ftemp_ext_abs;
+    static float ftemp_bed_pla;
+    static float ftemp_bed_abs;
+    static millis_t timepowersaving;
+    static float loading_feed_rate;
+    static float unloading_feed_rate;
+    static float unloading_loading_distance;
+
+    //end da vinci specific
+    
   static void storeDataIntoEEPROM(uint8_t corrupted = 0);
   static void readDataFromEEPROM(bool includeExtruder);
   static void restoreEEPROMSettingsFromConfiguration();
   static void writeSettings();
   static void update(GCode *com);
+
+//Davinci Specific, for internal update
+    static void update(long P,uint8_t T,long S,float X);
+  
   static void updatePrinterUsage();
   static inline void setVersion(uint8_t v) {
 #if EEPROM_MODE != 0

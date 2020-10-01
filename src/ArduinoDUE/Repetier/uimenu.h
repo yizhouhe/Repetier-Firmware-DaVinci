@@ -668,6 +668,13 @@ UI_MENU_ACTION2_T(ui_menu_epos, UI_ACTION_EPOSITION, UI_TEXT_ACTION_EPOSITION_FA
 /*
   Next step is to define sub menus leading to the action.
 */
+//confirmation page
+//UI_MENU_ACTION4C(ui_menu_confirmation,UI_ACTION_DUMMY,UI_TEXT_CONFIRMATION)
+
+//alert no filament box
+//UI_MENU_ACTION4_T(ui_no_filament_box,UI_ACTION_DUMMY,UI_TEXT_ALERT_NO_FILAMENTA_ID,UI_TEXT_ALERT_NO_FILAMENTB_ID,UI_TEXT_ALERT_NO_FILAMENTC_ID,UI_TEXT_ALERT_NO_FILAMENTD_ID, ALL_MODE)
+
+
 
 // **** Positioning menu
 UI_MENU_ACTIONCOMMAND_FILTER_T(ui_menu_home_all, UI_TEXT_HOME_ALL_ID, UI_ACTION_HOME_ALL, 0, MENU_MODE_PRINTING)

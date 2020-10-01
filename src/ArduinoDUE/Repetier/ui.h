@@ -19,7 +19,7 @@
 #ifndef _ui_h
 #define _ui_h
 
-//#include "gcode.h"
+#include "gcode.h"
 
 #define NO_DISPLAY 0
 #define DISPLAY_4BIT 1
@@ -30,6 +30,11 @@
 #define DISPLAY_GAMEDUINO2 6
 #define DISPLAY_SR 7
 
+//Davinci Specific, Hide/Easy/Advanced mode menu
+#define NOT_SHOW_MODE 0 //mask 0000
+#define ADVANCED_MODE 1 //mask 0001
+#define EASY_MODE 2    //mask 0010
+#define ALL_MODE ADVANCED_MODE|EASY_MODE //mask 0011
 /**
   What display type do you use?
   0 = No display
@@ -54,12 +59,29 @@
 // Add UI_ACTION_TOPMENU to show a menu as top menu
 // Add UI_ACTION_NO_AUTORETURN to prevent auto return to start display
 // ----------------------------------------------------------------------------
+//Davinci Specific, Custom dialog
+#define UI_CONFIRMATION_TYPE_YES_NO 1
+#define STATUS_OK  1
+#define STATUS_CANCEL 2
+#define STATUS_FAIL 3
 
 #define UI_ACTION_TOPMENU 8192
 #define UI_ACTION_NO_AUTORETURN 16384
 
 #define UI_ACTION_NEXT 1
 #define UI_ACTION_PREVIOUS 2
+
+//Davinci Specific, key pad and cheat keys definition
+#define UI_ACTION_RIGHT_KEY 3
+#define UI_ACTION_OK_TOP_PREV 10
+#define UI_ACTION_OK_TOP_NEXT 11
+#define UI_ACTION_OK_TOP_BACK 12
+#define UI_ACTION_OK_TOP_RIGHT 13
+#define UI_ACTION_OK_NEXT_BACK  14
+#define UI_ACTION_OK_NEXT_PREV  15
+#define UI_ACTION_OK_NEXT_RIGHT 16
+#define UI_ACTION_OK_PREV_RIGHT 17
+#define UI_ACTION_OK_PREV_BACK 18
 
 #define UI_ACTION_X_UP 100
 #define UI_ACTION_X_DOWN 101
@@ -232,7 +254,10 @@
 #define UI_ACTION_STOP 1221
 #define UI_ACTION_STOP_CONFIRMED 1222
 #define UI_ACTION_FAN2SPEED 1223
-#define UI_ACTION_AUTOLEVEL 1224
+
+//Da Vinci Specific
+//#define UI_ACTION_AUTOLEVEL 1224
+
 #define UI_ACTION_MEASURE_DISTORTION 1225
 #define UI_ACTION_TOGGLE_DISTORTION 1226
 #define UI_ACTION_MESSAGE 1227
@@ -254,7 +279,67 @@
 #define UI_ACTION_RESET_EEPROM 1243
 
 // 1500-1699 reserved for custom actions
-
+//Davinci Specific
+#define UI_ACTION_CLEAN_NOZZLE      1500
+#define UI_ACTION_SOUND         1501
+#define UI_ACTION_LOAD_EXTRUDER_0   1502
+#define UI_ACTION_UNLOAD_EXTRUDER_0   1503
+#if NUM_EXTRUDER > 1
+  #define UI_ACTION_LOAD_EXTRUDER_1 1504
+  #define UI_ACTION_UNLOAD_EXTRUDER_1 1505
+#endif
+#define UI_ACTION_AUTOLEVEL       1506
+#define UI_ACTION_DISPLAY_MODE      1507
+#define UI_ACTION_FILAMENT_SENSOR_ONOFF 1508
+#define UI_ACTION_KEEP_LIGHT_ON     1509
+#define UI_ACTION_CLEAN_DRIPBOX     1510
+#define UI_ACTION_LOAD_FAILSAFE     1511
+#define UI_ACTION_X_1           1512
+#define UI_ACTION_X_10          1513
+#define UI_ACTION_X_100         1514
+#define UI_ACTION_Y_1           1515
+#define UI_ACTION_Y_10          1516
+#define UI_ACTION_Y_100         1517
+#define UI_ACTION_Z_1           1518
+#define UI_ACTION_Z_10          1519
+#define UI_ACTION_Z_100         1520
+#define UI_ACTION_E_1           1521
+#define UI_ACTION_E_10          1522
+#define UI_ACTION_E_100         1523
+#define UI_ACTION_BED_OFF       1524
+#define UI_ACTION_LIGHT_OFF_AFTER   1525
+#define UI_ACTION_MANUAL_LEVEL      1526
+#define UI_ACTION_NO_FILAMENT     1528
+#define UI_ACTION_EXT_TEMP_ABS      1529
+#define UI_ACTION_EXT_TEMP_PLA      1530
+#define UI_ACTION_BED_TEMP_ABS      1531
+#define UI_ACTION_BED_TEMP_PLA      1532
+#define UI_ACTION_X_LENGTH        1533
+#define UI_ACTION_Y_LENGTH        1534
+#define UI_ACTION_Z_LENGTH        1535
+#define UI_ACTION_VERSION       1536
+#define UI_ACTION_TOP_SENSOR_ONOFF    1537
+#define UI_ACTION_WIFI_ONOFF      1538
+#define UI_ACTION_Z_0_1         1539
+#define UI_ACTION_X_MIN         1540
+#define UI_ACTION_Y_MIN         1541
+#define UI_ACTION_Z_MIN         1542
+#define UI_ACTION_TOGGLE_POWERSAVE    1543
+#define UI_ACTION_STOP_PRINT_FROM_MENU  1544
+#define UI_ACTION_BED_DOWN        1545
+#define UI_ACTION_BADGE_LIGHT_ONOFF   1546
+#define UI_ACTION_LOADING_FEEDRATE    1547
+#define UI_ACTION_UNLOADING_FEEDRATE  1548
+#define UI_ACTION_LOAD_UNLOAD_DISTANCE  1549
+#define UI_ACTION_PREPARE_SCANNER     1550
+#define UI_ACTION_LASER1_ONOFF        1551
+#define UI_ACTION_LASER2_ONOFF        1552
+#define UI_ACTION_LED1_ONOFF            1553
+#define UI_ACTION_LED2_ONOFF          1554
+#define UI_ACTION_CHANGE_TABLE_SPEED    1555
+#define UI_ACTION_ROTATE_TABLE        1556
+#define UI_ACTION_RELEASE_TABLE       1557
+#define UI_ACTION_ZMIN_CALCULATION    1558
 // 1700-1956 language selectors
 
 #define UI_ACTION_LANGUAGE_EN 1700
@@ -308,14 +393,34 @@
 #define UI_ACTION_WIZARD_JAM_WAITHEAT 5002
 #define UI_ACTION_WIZARD_JAM_EOF 5003
 
+//Davinci Specific
+#define UI_ACTION_WIZARD_FILAMENTCHANGE_END  5500
+
 // Load basic language definition to make sure all values are defined
 //#include "uilang.h"
+
+//Davinci Specific
+//#define UI_VERSION_STRING "Repetier" REPETIER_VERSION "M"
+//Davinci Specific
+extern void playsound(int tone,int duration);
 
 #define UI_MENU_TYPE_INFO 0
 #define UI_MENU_TYPE_FILE_SELECTOR 1
 #define UI_MENU_TYPE_SUBMENU 2
-#define UI_MENU_TYPE_MODIFICATION_MENU 3
-#define UI_MENU_TYPE_WIZARD 5
+
+//Davinci Specific, entry ID 
+//#define UI_MENU_TYPE_MODIFICATION_MENU 3
+//#define UI_MENU_TYPE_WIZARD 5
+#define UI_MENU_TYPE_HEADLINE 1
+#define UI_MENU_TYPE_ACTION_MENU 3
+#define UI_MENU_TYPE_MODIFICATION_MENU 4
+#define UI_MENU_TYPE_MENU_WITH_STATUS 5
+#define UI_MENU_TYPE_WIZARD 6
+#define UI_MENU_TYPE_STICKY 128
+
+//Davinci Specific
+#define UI_MENU_ENTRY_MIN_TYPE_CHECK 2
+#define UI_MENU_ENTRY_MAX_TYPE_CHECK 5
 
 struct UIMenuEntry_s
 {
@@ -325,6 +430,10 @@ struct UIMenuEntry_s
   uint16_t filter;     // allows dynamic menu filtering based on Printer::menuMode bits set.
   uint16_t nofilter;   // Hide if one of these bits are set
   int translation;     // Translation id
+  
+  //Davinci Specific, filter for UI
+  uint8_t display_mode; // Easy or advanced or both or none 
+  
   bool showEntry() const;
 };
 typedef const UIMenuEntry_s UIMenuEntry;
@@ -554,6 +663,7 @@ extern const int8_t encoder_table[16] PROGMEM;
 
 #define UI_STRING(name, text) const char PROGMEM name[] = text
 
+
 #define UI_PAGE6(name, row1, row2, row3, row4, row5, row6)                                                                \
   UI_STRING(name##_1txt, row1);                                                                                           \
   UI_STRING(name##_2txt, row2);                                                                                           \
@@ -569,6 +679,7 @@ extern const int8_t encoder_table[16] PROGMEM;
   UIMenuEntry name##_6 PROGMEM = {name##_6txt, 0, 0, 0, 0, 0};                                                            \
   const UIMenuEntry *const name##_entries[] PROGMEM = {&name##_1, &name##_2, &name##_3, &name##_4, &name##_5, &name##_6}; \
   const UIMenu name PROGMEM = {0, 0, 6, name##_entries};
+
 #define UI_PAGE6_T(name, row1, row2, row3, row4, row5, row6)                                                              \
   UIMenuEntry name##_1 PROGMEM = {0, 0, 0, 0, 0, row1};                                                                   \
   UIMenuEntry name##_2 PROGMEM = {0, 0, 0, 0, 0, row2};                                                                   \
@@ -819,6 +930,11 @@ extern const int8_t encoder_table[16] PROGMEM;
 #endif
 #define UI_MENU_MAXLEVEL 7
 
+//Davinci Specific
+#ifndef UI_ROWS
+  #define UI_ROWS 4
+#endif
+
 #define UI_FLAG_FAST_KEY_ACTION 1
 #define UI_FLAG_SLOW_KEY_ACTION 2
 #define UI_FLAG_SLOW_ACTION_RUNNING 4
@@ -828,6 +944,11 @@ class GCode;
 class UIDisplay
 {
 public:
+    //Davinci Specific
+    #if UI_AUTOLIGHTOFF_AFTER!=0
+      static millis_t ui_autolightoff_time;
+    #endif
+    static uint8_t display_mode; 
   volatile uint8_t flags;               // 1 = fast key action, 2 = slow key action, 4 = slow action running, 8 = key test running
   uint8_t col;                          // current col for buffer pre fill
   uint8_t menuLevel;                    // current menu level, 0 = info, 1 = group, 2 = groupdata select, 3 = value change
@@ -886,6 +1007,9 @@ public:
   void slowAction(bool allowMoves);
   void fastAction();
   void mediumAction();
+    //Davinci Specific
+    bool confirmationDialog(const char * title,const char * line1,const char * line2,int type=UI_CONFIRMATION_TYPE_YES_NO, bool defaultresponse=false);
+
   void pushMenu(const UIMenu *men, bool refresh);
   void popMenu(bool refresh);
   void showMessage(int id);
@@ -902,6 +1026,8 @@ public:
     outputMask &= ~bits;
   }
   void updateSDFileCount();
+    //Davinci Specific
+    void sdrefresh(uint16_t &r,char cache[UI_ROWS][MAX_COLS+1]);
   void goDir(char *name);
   bool isDirname(char *name);
   bool isWizardActive();

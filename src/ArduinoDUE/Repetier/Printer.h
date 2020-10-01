@@ -262,19 +262,36 @@ Step 2: Convert to RWC
 class Printer {
     static uint8_t debugLevel;
 
-public:
-#if USE_ADVANCE || defined(DOXYGEN)
-    static volatile int
-        extruderStepsNeeded;          ///< This many extruder steps are still needed, <0 =
-                                      ///< reverse steps needed.
-    static ufast8_t maxExtruderSpeed; ///< Timer delay for end extruder speed
-    // static uint8_t extruderAccelerateDelay;     ///< delay between 2 speec
-    // increases
-    static int advanceStepsSet;
-#if ENABLE_QUADRATIC_ADVANCE || defined(DOXYGEN)
-    static long advanceExecuted; ///< Executed advance steps
-#endif
-#endif
+    public:
+    #if USE_ADVANCE || defined(DOXYGEN)
+        static volatile int
+            extruderStepsNeeded;          ///< This many extruder steps are still needed, <0 =
+                                          ///< reverse steps needed.
+        static ufast8_t maxExtruderSpeed; ///< Timer delay for end extruder speed
+        // static uint8_t extruderAccelerateDelay;     ///< delay between 2 speec
+        // increases
+        static int advanceStepsSet;
+        #if ENABLE_QUADRATIC_ADVANCE || defined(DOXYGEN)
+            static long advanceExecuted; ///< Executed advance steps
+        #endif
+    #endif
+
+    //Davinci Specific, sensor for Top Cover       
+    static bool btop_Cover_open;
+    //Davinci Specific, extra modes
+    static uint8_t menuModeEx;
+    //Davinci Specific, memorize the used extruder for DUO       
+    #if NUM_EXTRUDER>1
+        static uint lastextruderID;
+    #endif
+    //Davinci specific, for communication between GCODE command and printer menu  
+    #if FEATURE_Z_PROBE
+      static bool zprobe_ok;
+      static float Z_probe[3];
+    #endif
+    //end da vinci specific
+
+
     static uint16_t menuMode;
     static bool failedMode;  // In failed mode only M110 and M999 is working
     static uint8_t rescueOn; // 1 is rescue is enabled
@@ -526,6 +543,21 @@ public:
     static void toggleNoMoves();
     static void toggleEndStop();
     static INLINE uint8_t getDebugLevel() { return debugLevel; }
+
+    //Davinci Specific, extra mode
+    static INLINE void setMenuModeEx(uint8_t mode,bool on)
+    {
+        if(on)
+            menuModeEx |= mode;
+        else
+            menuModeEx &= ~mode;
+    }
+    static INLINE bool isMenuModeEx(uint8_t mode)
+    {
+        return (menuModeEx & mode)==mode;
+    }
+    //end da vinci specific
+    
     static INLINE bool debugEcho() { return ((debugLevel & 1) != 0); }
 
     static INLINE bool debugInfo() { return ((debugLevel & 2) != 0); }
@@ -1237,6 +1269,14 @@ public:
     static void setup();
     static void defaultLoopActions();
     static void homeAxis(bool xaxis, bool yaxis, bool zaxis); /// Home axis
+
+//Davinci Specific, clean nozzle feature
+#if ENABLE_CLEAN_NOZZLE 
+    static void cleanNozzle(bool restoreposition=true, int8_t extT=-1);
+#endif
+
+
+    
     static void setOrigin(float xOff, float yOff, float zOff);
     /** \brief Tests if the target position is allowed.
 
