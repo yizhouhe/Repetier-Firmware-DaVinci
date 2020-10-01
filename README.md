@@ -8,19 +8,19 @@ Build Status: [Build without error with Arduino IDE]
 
 This firmware is based on the popular repetier firmware 1.0.4 and incoprorate changes from LUC's modification to make it work for Da Vinci <B>1.0/A, 2.0 single fan, 2.0/A dual fans and also AiO</B> (NB:scanner function is not supported so AiO will work like an 1.0A)   
 
-## Do not use it on PRO or Jr or Mini    
+## Do not use it on Da Vinci 1.0 Color, Super, PRO, Plus, Jr, Mini or Mano.    
 
 Be noted original Repetier FirmWare is not compatible wih Davinci boards.   
  
 If you changed the stock board with RAMPS or any other none stock board, Use the orginal Repetier Firmware https://github.com/repetier/Repetier-Firmware or Marlin https://github.com/MarlinFirmware/Marlin.
 
-YOU MIGHT DAMAGE YOUR PRINTER OR VOID YOUR WARRANTY, DO IT ON YOUR OWN RISK. 
+YOU MIGHT DAMAGE YOUR PRINTER OR VOID YOUR WARRANTY (if there is any), DO IT ON YOUR OWN RISK. 
 It is possible to revert to stock firmware but require additional guides and tools, so be sure of what you are doing.
 
 ***
 AiO scanner is not currently supportted.
 
-The board can be easily exposed by removing the back panel of the printer secured by two torx screws.  Supported boards have a jumper labeled JP1, second generation boards have a jumper labeled J37. More info can be found on the [Voltivo forum](http://voltivo.com/forum/davinci-peersupport/340-new-kind-of-mainboard-no-j1-erase-jumper).
+The board can be easily exposed by removing the back panel of the printer secured by two torx screws.  Supported boards have a jumper labeled JP1 (1.0, 2.0, AIO), second generation boards (1.0A and 2.0A) have a jumper labeled J37. 
 ***
 
 Here are just a few of the benefits of using this firmware:
@@ -48,7 +48,7 @@ The current firmware is based on:
 Note : points 1 and 2 are only needed to wipe the stock fw or a corrupted fw, for update they are not necessary.
 Note 2: remove the jumper before flashing if still there
 3. Use an arduino IDE supporting arduino DUE, [1.8.13](https://www.arduino.cc/en/Main/Software) with Arduino SAM Boards (32-bits ARM Cortex-M3) 1.6.12 Arduino Due module from board manager 
-4. Update variants.cpp/USBCore.cpp arduino files with the ones present in src\ArduinoDUE\AdditionalArduinoFile according your IDE version.  
+4. Update variants.cpp and USBCore.cpp arduino files under your user folder with the ones present in "\src\ArduinoDUE\AdditionalArduinoFiles\Da Vinci 1.0 - Arduino IDE 1.8.13 -Due 1.8.3\Arduino15\packages\arduino\hardware\sam\1.6.12". For windows 10, the target file to be replaced is located under C:\Users\[Your username]\AppData\Local\Arduino15\packages\arduino\hardware\sam\1.6.12 
 5. Open the project file named repetier.ino located in src\ArduinoDUE\Repetier directory in the arduino IDE. 
 6. Modify the DAVINCI define in Configuration.h file to match your targeted Da Vinci.  See below.
 7. Under the tools menu select the board type as Arduino DUE (Native USB Port) and the proper port you have connected to the printer.  NOTE: You can usually find this out by looking at the tools -> port menu both before and after plugging in the printer to your computer's USB.
