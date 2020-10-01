@@ -1,44 +1,41 @@
-## Da Vinci Firmware based on Repetier (1.0.4)
+## Da Vinci Firmware based on Repetier (0.92.10)
 ============================
 
+[![Join the chat at https://gitter.im/luc-github/Repetier-Firmware-0.92](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/luc-github/Repetier-Firmware-0.92?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)    
 
-Build Status: [Build without error with Arduino IDE]    
+Build Status: [![Build Status](https://travis-ci.org/luc-github/Repetier-Firmware-4-Davinci.svg?branch=master)](https://travis-ci.org/luc-github/Repetier-Firmware-4-Davinci)    
     
       
 
-This firmware is based on the popular repetier firmware 1.0.4 and incoprorate changes from LUC's modification to make it work for Da Vinci <B>1.0/A, 2.0 single fan, 2.0/A dual fans and also AiO</B> (NB:scanner function is not supported so AiO will work like an 1.0A)   
-
+This firmware is based on the popular repetier firmware for Da Vinci <B>1.0/A, 2.0 single fan, 2.0/A dual fans and also AiO</B> (NB:scanner function is not supported so AiO will work like an 1.0A)   
 ## Do not use it on PRO or Jr or Mini    
-
-Be noted original Repetier FirmWare is not compatible wih Davinci boards.   
+Be noted original Repetier FW is not compatible wih Davinci boards   
  
-If you changed the stock board with RAMPS or any other none stock board, Use the orginal Repetier Firmware https://github.com/repetier/Repetier-Firmware or Marlin https://github.com/MarlinFirmware/Marlin.
+If you change the board, currently DUE based are supported with RADDS, as well as Graphical screen and LCD with encoder, there are some sample configuration files provided for RADDS/DUE/GLCD using 1/128 step drivers.
 
-YOU MIGHT DAMAGE YOUR PRINTER OR VOID YOUR WARRANTY, DO IT ON YOUR OWN RISK. 
-It is possible to revert to stock firmware but require additional guides and tools, so be sure of what you are doing.
+YOU MIGHT DAMAGE YOUR PRINTER OR VOID YOUR WARRANTY, DO IT ON YOUR OWN RISK. When it is possible on 1.0/2.0, currently on 1.0A/2.0A and AiO there is no way to revert to stock fw so be sure of what you are doing.
 
 ***
-AiO scanner is not currently supportted.
+AiO scanner support is present in FW but scanner software support is currently basic, [horus](https://github.com/bqlabs/horus) is a good candidat, feel free to help [here](https://github.com/luc-github/Repetier-Firmware-0.92/issues/156)  
 
 The board can be easily exposed by removing the back panel of the printer secured by two torx screws.  Supported boards have a jumper labeled JP1, second generation boards have a jumper labeled J37. More info can be found on the [Voltivo forum](http://voltivo.com/forum/davinci-peersupport/340-new-kind-of-mainboard-no-j1-erase-jumper).
 ***
 
 Here are just a few of the benefits of using this firmware:
 
-* It works with host software such as [repetier host](http://repetier.com) and [OctoPrint](http://octoprint.org/), Cura https://ultimaker.com/software/ultimaker-cura, Simplify3D, etc... giving you full control of your hardware.
+* It works with host software such as [repetier host](http://repetier.com) and [OctoPrint](http://octoprint.org/), cura, Simplify3D, etc... giving you full control of your hardware.
 * It works stand alone (not connected to PC) if you use a WIFI SD Card or SD card extender. 
 * It allows the use of clear ABS (by disabling optical sensors), as well as other arbitrary filament brands/types as temperatures can be controlled freely and there is no requirement for chiped cartridges. 
 
 You can find more info on the [Voltivo forum](http://voltivo.com/forum/davinci-firmware).  
 
-The current firmware is based on 
-[repetier Firmware](https://github.com/repetier/Repetier-Firmware) 1.0.4 
-[LUC Repetier-Firmware-4-Davinci (0.92)] https://github.com/luc-github/Repetier-Firmware-4-Davinci    
-[bgm370 Da Vinci 1.0 FW (0.91)](https://github.com/bgm370/Repetier-Firmware)
+The current firmware is based on [repetier Firmware](https://github.com/repetier/Repetier-Firmware) 0.92 : [bgm370 Da Vinci 1.0 FW](https://github.com/bgm370/Repetier-Firmware)    
+Sources are [here](https://github.com/luc-github/Repetier-Firmware-0.92)   
+The previous version (based on repetier v0.91) can be found [here](https://github.com/luc-github/Repetier-Firmware)   
 
 ***
 ## Current Status
-#### Alpha - It complied fine, have not tested on printer
+#### Beta - so far so good
 
 ***
 ## Installation
@@ -46,8 +43,9 @@ The current firmware is based on
 2. Turn the machine on and wait a few seconds then turn it off again.  The machine will have been flashed removing the current stock firmware and allowing it to be detected as a normal arduino DUE. NOTE: Windows users may need to install drivers to detect the board.  Consult the Voltivo forums.   
 Note : points 1 and 2 are only needed to wipe the stock fw or a corrupted fw, for update they are not necessary.
 Note 2: remove the jumper before flashing if still there
-3. Use an arduino IDE supporting arduino DUE, [1.8.13](https://www.arduino.cc/en/Main/Software) with Arduino SAM Boards (32-bits ARM Cortex-M3) 1.6.12 Arduino Due module from board manager 
+3. Use an arduino IDE supporting arduino DUE, [1.8.0](https://www.arduino.cc/en/Main/Software) with Due 1.6.8 module from board manager [FAQ#166](https://github.com/luc-github/Repetier-Firmware-0.92/issues/166).<H3 style="color:red">Do not use 1.5.8 it is not supported and will give compilation [error: FAQ#201](https://github.com/luc-github/Repetier-Firmware-0.92/issues/201)</H3>
 4. Update variants.cpp/USBCore.cpp arduino files with the ones present in src\ArduinoDUE\AdditionalArduinoFile according your IDE version.  
+NOTE: You do not need to compile arduino from source these files are in the arduino directory structure [FAQ#114](https://github.com/luc-github/Repetier-Firmware-0.92/issues/114).    
 5. Open the project file named repetier.ino located in src\ArduinoDUE\Repetier directory in the arduino IDE. 
 6. Modify the DAVINCI define in Configuration.h file to match your targeted Da Vinci.  See below.
 7. Under the tools menu select the board type as Arduino DUE (Native USB Port) and the proper port you have connected to the printer.  NOTE: You can usually find this out by looking at the tools -> port menu both before and after plugging in the printer to your computer's USB.
@@ -94,7 +92,7 @@ Do not ask help on repetier github they do not support this FW / printer - pleas
 
 ***
 ## Implemented
-* 1.0.4 [Repetier](https://github.com/repetier/Repetier-Firmware) based   
+* 0.92.10 [Repetier](https://github.com/repetier/Repetier-Firmware) based   
 * Standard GCODE commands   
 * Single/Dual extruders support DaVinci 1.0/A, 2.0/A all generations, AiO but no scanner support because no application
 * Single Fan / Dual fans support according printer configuration
@@ -134,14 +132,5 @@ Easy: <img src='https://cloud.githubusercontent.com/assets/8822552/4748170/bfa0b
 Advanced :  <img src='https://cloud.githubusercontent.com/assets/8822552/4748932/bebab9e2-5a7c-11e4-8fea-cdbe3d70820c.png'>   
 
 ## Donation:
-Every support is welcome: 
-
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-<input type="hidden" name="cmd" value="_donations" />
-<input type="hidden" name="business" value="NCXU8VCD8KCBL" />
-<input type="hidden" name="currency_code" value="USD" />
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
-</form>
-   
-Especially if need to buy new printer to add Firmware support.
+Every support is welcome: [<img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG_global.gif" border="0" alt="PayPal – The safer, easier way to pay online.">](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VT5LV38N4U3VQ)    
+Especially if need to buy new printer to add FW support.
