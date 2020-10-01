@@ -61,9 +61,6 @@ If done correctly you will see the arduino sketch compile successfully and outpu
 11. When update is complete <B>you must calibrate your bed height!</B>Use manual bed leveling in menu   
 12. Next you can calibrate your filament as usual, and second extruder offset if you have.   
 
-For information on upgrading from or reverting to stock FW and other procedures please check [Da Vinci Voltivo forum](http://voltivo.com/forum/davinci).    
-<h4>:warning:There is no known way to revert to stock FW on 1.0A/2.0A/AiO until today.</h4>     
-
 Do not forget to modify the configuration.h to match your targeted Da Vinci: 1.0, 2.0 SF or 2.0.   
 for basic installation just change :   
 '<code>#define DAVINCI 1 // "1" For DAVINCI 1.0, "2" For DAVINCI 2.0 with 1 FAN, "3" For DAVINCI 2.0 with 2 FANS, 4 For AiO （no scanner)</code>'    
@@ -83,16 +80,6 @@ Another excellent tutorial for flashing and installation is here from Jake : htt
 Or a great video done by Daniel Gonos: https://www.youtube.com/watch?v=rjuCvlnpB7M but Arduino ide version described is not correct for latest firmware version, use the one mentioned above.   
 
 
-***
-## TODO or Questions ?
-* [Check issue list](https://github.com/luc-github/Repetier-Firmware-0.92/issues)   
-Do not ask help on repetier github they do not support this FW / printer - please use this [github for issues](https://github.com/luc-github/Repetier-Firmware-0.92/issues)
-
-* [FAQ](https://github.com/luc-github/Repetier-Firmware-0.92/issues?utf8=%E2%9C%93&q=is%3Aclosed+label%3AFAQ+)    
-
-* [Documentation](https://github.com/luc-github/Repetier-Firmware-0.92/wiki) TBD - feel free to help 
-
-***
 ## Implemented
 * 1.0.4 [Repetier](https://github.com/repetier/Repetier-Firmware) based   
 * Standard GCODE commands   
