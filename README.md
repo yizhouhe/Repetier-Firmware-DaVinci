@@ -32,8 +32,8 @@ Here are just a few of the benefits of using this firmware:
 You can find more info on the [Voltivo forum](http://voltivo.com/forum/davinci-firmware).  
 
 The current firmware is based on 
-[repetier Firmware](https://github.com/repetier/Repetier-Firmware) 1.0.4 
-[LUC Repetier-Firmware-4-Davinci (0.92)] https://github.com/luc-github/Repetier-Firmware-4-Davinci    
+[Repetier Firmware (1.0.4 )](https://github.com/repetier/Repetier-Firmware) 
+[LUC Repetier-Firmware-4-Davinci (0.92)] (https://github.com/luc-github/Repetier-Firmware-4-Davinci)    
 [bgm370 Da Vinci 1.0 FW (0.91)](https://github.com/bgm370/Repetier-Firmware)
 
 ***
