@@ -55,7 +55,7 @@ Note 2: remove the jumper before flashing if still there
 8. Press the usual arduino compile and upload button.    
 If done correctly you will see the arduino sketch compile successfully and output in the log showing the upload status.
 9. Once flash is done : restart printer         
-<H3> If you have black bars and printer is not detected properly, it means you did not do the point 4 properly [check: FAQ#172](https://github.com/luc-github/Repetier-Firmware-0.92/issues/172)</H3> so go back to point 4.     
+<H3> If you have black bars and printer is not detected properly, it means you did not do the point 4 properly, so go back to point 4. and make sure you copy the two file to right directory.    
 
 10. After printer restarted <B>do not forget to send G-Code M502 then M500 </B>from repetier's Print Panel tab <B>or from the printer menu "Settings/Load Fail-Safe"</B> and accept to save the new eeprom settings.    
 11. When update is complete <B>you must calibrate your bed height!</B>Use manual bed leveling in menu   
@@ -82,7 +82,6 @@ Another excellent tutorial for flashing and installation is here from Jake : htt
 
 Or a great video done by Daniel Gonos: https://www.youtube.com/watch?v=rjuCvlnpB7M but Arduino ide version described is not correct for latest firmware version, use the one mentioned above.   
 
-Any installation issue ? check the <H3>[Frequent Asked Questions](https://github.com/luc-github/Repetier-Firmware-0.92/issues?utf8=%E2%9C%93&q=is%3Aclosed+label%3AFAQ+)</H3> the answer is in there.
 
 ***
 ## TODO or Questions ?
