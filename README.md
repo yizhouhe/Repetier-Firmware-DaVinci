@@ -55,15 +55,20 @@ Note 2: remove the jumper before flashing if still there
 8. Press the usual arduino compile and upload button.    
 If done correctly you will see the arduino sketch compile successfully and output in the log showing the upload status.
 9. Once flash is done : restart printer         
-<H3> If you have black bars and printer is not detected properly, it means you did not do the point 4 properly, so go back to point 4. and make sure you copy the two file to right directory.    
+
+If you have black bars and printer is not detected properly, it means you did not do the point 4 properly, so go back to point 4. and make sure you copy the two file to right directory.    
 
 10. After printer restarted <B>do not forget to send G-Code M502 then M500 </B>from repetier's Print Panel tab <B>or from the printer menu "Settings/Load Fail-Safe"</B> and accept to save the new eeprom settings.    
 11. When update is complete <B>you must calibrate your bed height!</B>Use manual bed leveling in menu   
 12. Next you can calibrate your filament as usual, and second extruder offset if you have.   
 
 Do not forget to modify the configuration.h to match your targeted Da Vinci: 1.0, 2.0 SF or 2.0.   
+
+
 for basic installation just change :   
-'<code>#define DAVINCI 1 // "1" For DAVINCI 1.0, "2" For DAVINCI 2.0 with 1 FAN, "3" For DAVINCI 2.0 with 2 FANS, 4 For AiO （no scanner)</code>'    
+'<code>#define DAVINCI 1 // "1" For DAVINCI 1.0, "2" For DAVINCI 2.0 with 1 FAN, "3" For DAVINCI 2.0 with 2 FANS, 4 For AiO （no scanner)</code>'
+
+    
   0 for not Davinci board (like DUE/RADDS)    
   1 for DaVinci 1.0 (1Fan, 1 Extruder)   
   2 for DaVinci 2.0 SF (1Fan, 2 Extruders)   
