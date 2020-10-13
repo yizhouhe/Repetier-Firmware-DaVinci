@@ -77,6 +77,27 @@ public:
 
 class Com {
 public:
+    //Davinci Specific
+    FSTRINGVAR(tReadInput)
+    FSTRINGVAR(tReset)
+    FSTRINGVAR(tTempExtABS)
+    FSTRINGVAR(tTempExtPLA)
+    FSTRINGVAR(tTempBedABS)
+    FSTRINGVAR(tTempBedPLA)
+    FSTRINGVAR(tLoadFeedRate)
+    FSTRINGVAR(tUnloadFeedRate)
+    FSTRINGVAR(tUnloadLoadDistance)
+    FSTRINGVAR(tKeepLightOn)
+    FSTRINGVAR(tSensorOn)
+    FSTRINGVAR(tTopsensorOn)
+    FSTRINGVAR(tLightOn)
+    FSTRINGVAR(tBadgeLightOn)
+    FSTRINGVAR(tSoundOn)
+    FSTRINGVAR(tWifiOn)
+    FSTRINGVAR(tPowerSave)
+    FSTRINGVAR(tDisplayMode)
+    //end davinci specific
+
     FSTRINGVAR(tM999)
     FSTRINGVAR(tEmpty)
     FSTRINGVAR(tDebug)
@@ -87,6 +108,10 @@ public:
     FSTRINGVAR(tINF)
     FSTRINGVAR(tError)
     FSTRINGVAR(tInfo)
+
+    //ESP8266 Specific
+    FSTRINGVAR(tStatus)
+
     FSTRINGVAR(tWarning)
     FSTRINGVAR(tResend)
     FSTRINGVAR(tEcho)
@@ -338,6 +363,18 @@ public:
     FSTRINGVAR(zZProbeBendingCorB)
     FSTRINGVAR(zZProbeBendingCorC)
 #endif
+
+//Davinci Specific, manual leveling
+FSTRINGVAR(tManualProbeX1)
+FSTRINGVAR(tManualProbeY1)
+FSTRINGVAR(tManualProbeX2)
+FSTRINGVAR(tManualProbeY2)
+FSTRINGVAR(tManualProbeX3)
+FSTRINGVAR(tManualProbeY3)
+FSTRINGVAR(tManualProbeX4)
+FSTRINGVAR(tManualProbeY4)
+//davinci specific end
+
 #if FEATURE_AUTOLEVEL
     FSTRINGVAR(tAutolevelActive)
 #endif
@@ -457,6 +494,14 @@ public:
     FSTRINGVAR(tSDErrorCode)
     FSTRINGVAR(tHeaterDecoupled)
     FSTRINGVAR(tHeaterDecoupledWarning)
+
+//Davinci Specific, be able to disable decouple test
+#if FEATURE_DECOUPLE_TEST
+FSTRINGVAR(tHeaterDecoupled)
+FSTRINGVAR(tHeaterDecoupledWarning)
+#endif //end davinci specific FEATURE_DECOUPLE_TEST
+
+    
 #if DISTORTION_CORRECTION
     FSTRINGVAR(tZCorrectionEnabled)
     FSTRINGVAR(tZCorrectionDisabled)

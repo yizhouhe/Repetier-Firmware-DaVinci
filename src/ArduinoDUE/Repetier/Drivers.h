@@ -28,6 +28,14 @@ public:
     virtual void gotoPosition(float newPos) = 0;
     virtual void enable() = 0;
     virtual void disable() = 0;
+
+    //Davinci Specific
+    virtual void setdelayUS(int32_t newdelayUS) = 0;
+    virtual int32_t getdelayUS() = 0;
+    virtual void setstepsPerMM (float newstepsPerMM) = 0;
+    virtual float getstepsPerMM ()= 0;
+   //end davinci specific
+  
     virtual void home(bool goToCurrent, bool onlyIfNotHomed) = 0;
     virtual bool endstopHit() = 0;
 };
@@ -43,6 +51,17 @@ class StepperDriver : public MotorDriverInterface {
     float stepsPerMM;
 
 public:
+  //Davinci Specific
+    void setdelayUS(int32_t newdelayUS)
+    {
+      delayUS=newdelayUS;
+    }
+    int32_t getdelayUS()
+    {
+      return delayUS;
+    }
+    //end davinci specific
+    
     StepperDriver(float _stepsPerMM, float speed) {
         stepsPerMM = _stepsPerMM;
         position = 0;

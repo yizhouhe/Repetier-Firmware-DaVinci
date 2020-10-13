@@ -21,6 +21,8 @@
 */
 
 #include "Repetier.h"
+//Davinci Specific
+#include <string.h>
 
 #if FEATURE_CONTROLLER != NO_CONTROLLER
 uint8_t Com::selectedLanguage;
@@ -30,13 +32,16 @@ uint8_t Com::selectedLanguage;
 #if DRIVE_SYSTEM == DELTA
 #define MACHINE_TYPE "Delta"
 #elif DRIVE_SYSTEM == CARTESIAN
-#define MACHINE_TYPE "Mendel"
+//Davinci Specific
+#define MACHINE_TYPE "DaVinci"
 #else
 #define MACHINE_TYPE "Core_XY"
 #endif
 #endif
 #ifndef FIRMWARE_URL
-#define FIRMWARE_URL "https://github.com/repetier/Repetier-Firmware/"
+//#define FIRMWARE_URL "https://github.com/repetier/Repetier-Firmware/"
+//Davinci Specific
+#define FIRMWARE_URL "https://github.com/yizhouhe/Repetier-Firmware-DaVinci/"
 #endif // FIRMWARE_URL
 const char* const axisNames[] PROGMEM = { "X", "Y", "Z", "E", "A", "B", "C" };
 FSTRINGVALUE(Com::tFirmware,
@@ -304,7 +309,18 @@ FSTRINGVALUE(Com::tWait, WAITING_IDENTIFIER)
 #if EEPROM_MODE == 0
 FSTRINGVALUE(Com::tNoEEPROMSupport, "No EEPROM support compiled.\r\n")
 #else
+//Davinci Specific, manual leveling positions
+FSTRINGVALUE(Com::tManualProbeX1,"Manual-probe X1 [mm]")
+FSTRINGVALUE(Com::tManualProbeY1,"Manual-probe Y1 [mm]")
+FSTRINGVALUE(Com::tManualProbeX2,"Manual-probe X2 [mm]")
+FSTRINGVALUE(Com::tManualProbeY2,"Manual-probe Y2 [mm]")
+FSTRINGVALUE(Com::tManualProbeX3,"Manual-probe X3 [mm]")
+FSTRINGVALUE(Com::tManualProbeY3,"Manual-probe Y3 [mm]")
+FSTRINGVALUE(Com::tManualProbeX4,"Manual-probe X4 [mm]")
+FSTRINGVALUE(Com::tManualProbeY4,"Manual-probe Y4 [mm]")
+//end davinci specific
 FSTRINGVALUE(Com::tZProbeOffsetZ, "Coating thickness [mm]")
+
 #if FEATURE_Z_PROBE
 FSTRINGVALUE(Com::tZProbeHeight, "Z-probe height [mm]")
 FSTRINGVALUE(Com::tZProbeBedDitance, "Max. z-probe - bed dist. [mm]")
@@ -470,6 +486,13 @@ FSTRINGVALUE(Com::tHeaterDecoupled, "Heater decoupled")
 FSTRINGVALUE(
     Com::tHeaterDecoupledWarning,
     "One heater seems decoupled from thermistor - disabling all for safety!")
+
+//Davinci Specific, be able to disable decouple test
+#if FEATURE_DECOUPLE_TEST
+FSTRINGVALUE(Com::tHeaterDecoupled,"Heater decoupled")
+FSTRINGVALUE(Com::tHeaterDecoupledWarning,"One heater seems decoupled from thermistor - disabling all for safety!")
+#endif //FEATURE_DECOUPLE_TEST
+
 #if DISTORTION_CORRECTION
 FSTRINGVALUE(Com::tZCorrectionEnabled, "Z correction enabled")
 FSTRINGVALUE(Com::tZCorrectionDisabled, "Z correction disabled")

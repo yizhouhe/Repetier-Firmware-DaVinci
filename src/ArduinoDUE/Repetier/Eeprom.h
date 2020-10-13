@@ -386,7 +386,82 @@ public:
     return Z_PROBE_BED_DISTANCE;
 #endif
   }
+//Davinci Specific, manual leveling
+static inline float ManualProbeX1() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_X1);
+#else
+        return MANUAL_LEVEL_X1;
+#endif
+    }
 
+    
+static inline float ManualProbeY1() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_Y1);
+#else
+        return MANUAL_LEVEL_Y1;
+#endif
+    } 
+    
+static inline float ManualProbeX2() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_X2);
+#else
+        return MANUAL_LEVEL_X2;
+#endif
+    }
+    
+static inline float ManualProbeY2() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_Y2);
+#else
+        return MANUAL_LEVEL_Y2;
+#endif
+    }    
+       
+static inline float ManualProbeX3() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_X3);
+#else
+        return MANUAL_LEVEL_X3;
+#endif
+    }
+    
+static inline float ManualProbeY3() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_Y3);
+#else
+        return MANUAL_LEVEL_Y3;
+#endif
+    }    
+ 
+ static inline float ManualProbeX4() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_X4);
+#else
+        return MANUAL_LEVEL_X4;
+#endif
+    }
+    
+static inline float ManualProbeY4() {
+#if EEPROM_MODE!=0
+        return HAL::eprGetFloat(EPR_MANUAL_LEVEL_Y4);
+#else
+        return MANUAL_LEVEL_Y4;
+#endif
+    }    
+
+    static inline float axisCompTanXY() {
+#if EEPROM_MODE != 0
+        return HAL::eprGetFloat(EPR_AXISCOMP_TANXY);
+#else
+        return AXISCOMP_TANXY;
+#endif
+    }
+
+//end davinci specific
+    
   static inline float axisCompTanXY() {
 #if EEPROM_MODE != 0
     return HAL::eprGetFloat(EPR_AXISCOMP_TANXY);

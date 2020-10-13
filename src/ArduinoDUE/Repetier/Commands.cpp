@@ -1746,45 +1746,44 @@ void Commands::processGCode(GCode* com) {
                 Printer::moveTo(EEPROM::zProbeX1(), EEPROM::zProbeY1(), IGNORE_COORDINATE,
                                 IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
                 sum = Printer::runZProbe(true, false, Z_PROBE_REPETITIONS, false);
-                if (sum == ILLEGAL_Z_PROBE)
+                if (sum == ILLEGAL_Z_PROBE){
                     ok = false;
-                }
+                    //Davinci Specific
+                    Printer::Z_probe[0]=-2000;
+                    }
+                else Printer::Z_probe[0]=sum;   
+                uid.refreshPage();
+                
             if (ok) {
                    Printer::moveTo(EEPROM::zProbeX2(), EEPROM::zProbeY2(), IGNORE_COORDINATE,
                             IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
                    last = Printer::runZProbe(false, false);
                    if (last == ILLEGAL_Z_PROBE)
-						{ok = false;
+						            {ok = false;
                         //Davinci Specific
                         Printer::Z_probe[1]=-2000;
                         }
-                    else 
-						{Printer::Z_probe[1]=last;
-                        uid.refreshPage();
-						}
-						//end da vinci specific
-                     
+                    else Printer::Z_probe[1]=last;
+                    uid.refreshPage();
+						        //end da vinci specific
                     sum += last;
                     }
-			if (ok) {
+			      if (ok) {
                 Printer::moveTo(EEPROM::zProbeX3(), EEPROM::zProbeY3(), IGNORE_COORDINATE,
                             IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
                 last = Printer::runZProbe(false, true);
                 if (last == ILLEGAL_Z_PROBE)
-					{  ok = false;
-                      //Davinci Specific
-                        Printer::Z_probe[2]=-2000;
+					          {ok = false;
+                     //Davinci Specific
+                     Printer::Z_probe[2]=-2000;
                     }
-				else 
-					{
-						Printer::Z_probe[2]=last;
+				            else Printer::Z_probe[2]=last;
                     uid.refreshPage();
-                    }
-				sum += last;
-					}
-			if (ok) {
-				sum *= 0.33333333333333;
-				Com::printFLN(Com::tZProbeAverage, sum);
+                    sum += last;
+					          }
+			      if (ok) {
+				            sum *= 0.33333333333333;
+				            Com::printFLN(Com::tZProbeAverage, sum);
 				if (com->hasS() && com->S) {
 					#if MAX_HARDWARE_ENDSTOP_Z
 						#if DRIVE_SYSTEM == DELTA
@@ -1906,6 +1905,9 @@ void Commands::processGCode(GCode* com) {
         break;
 #if FEATURE_AUTOLEVEL
     case 32: // G32 Auto-Bed leveling
+        #if DAVINCI == 4
+                Check_turntable();
+        #endif
         if (!runBedLeveling(com->hasS() ? com->S : -1)) {
             GCode::fatalError(PSTR("G32 leveling failed!"));
         }
@@ -1931,6 +1933,12 @@ void Commands::processGCode(GCode* com) {
     } break;
 #endif
 #endif
+        //Davinci AiO specific
+        #if DAVINCI == 4
+            case 50: //G50     : reset origin position
+                getMotorDriver(0)->setCurrentAs(0);
+                break;
+        #endif
     case 90: // G90
         Printer::relativeCoordinateMode = false;
         if (com->internalCommand)
@@ -2438,7 +2446,31 @@ void Commands::processMCode(GCode* com) {
             }
         }
         break;
-    case 73: // M73 - Print status on display
+//Davinci Specific, Stop Printing
+       case 50://kill print
+            uid.executeAction(UI_ACTION_SD_STOP,true);
+            break;
+#if DAVINCI == 4
+       case 17:
+            getMotorDriver(0)->disable();
+            break;
+       case 18:
+            getMotorDriver(0)->enable();
+            break;
+       case 19: //M19 home motor
+            if (Home_motor(0, TURNTABLE_HOME_SPEED, TABLE_HOME_PIN, TURNTABLE_PERIMETER+1) ) Com::printFLN("Success Home motor ",0);
+            else Com::printFLN("Failed Home motor ",0);
+            break;
+//Davinci AiO Specific
+#if DAVINCI == 4 
+        case 60:
+        //M60 Tn is reading ldr as no ldr - just return fake value, hope 500 is ok
+            Com::printFLN("",500);
+            break;
+#endif
+//end davinci specific
+
+case 73: // M73 - Print status on display
 #if SDSUPPORT
         if (sd.sdmode == 1) {
             UI_PROGRESS_UPD(com->hasP() ? com->P : -1,
@@ -3094,8 +3126,7 @@ void Commands::processMCode(GCode* com) {
             do {
                 Commands::checkForPeriodicalActions(true);
                 GCode::keepAlive(WaitHeater);
-                //Davinci Specific, STOP management
-                    if (Printer::isMenuModeEx(MENU_MODE_STOP_REQUESTED))break;
+                
             } while (HAL::digitalRead(com->P) != comp);
         }
         break;

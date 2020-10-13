@@ -54,6 +54,17 @@ void commandG201(GCode& code) {
         id = 0;
     if (id >= NUM_MOTOR_DRIVERS)
         id = 0;
+
+    //Davinci Specific
+    //allow to change speed
+    if(code.hasF())
+    {
+    if (TURNTABLE_MAX_SPEED > code.F) motorDrivers[id]->setdelayUS( 500000 / (code.F * motorDrivers[id]->getstepsPerMM()));
+    else motorDrivers[id]->setdelayUS( 500000 / (TURNTABLE_MAX_SPEED * motorDrivers[id]->getstepsPerMM()));
+    }
+  //end davinci specific allow to use mm (X) or degres (E)
+
+  
     if (!code.hasX())
         return;
     motorDrivers[id]->gotoPosition(code.X);
