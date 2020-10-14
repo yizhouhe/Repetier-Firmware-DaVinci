@@ -849,13 +849,21 @@ public:
 
     // Watchdog support
     inline static void startWatchdog() {
+      //Davinci Specific
+      #if FEATURE_WATCHDOG
+         uint32_t timeout = 8000 * 256 / 1000; //8000ms = 8s
+         if (timeout == 0) timeout = 1;
+         else if (timeout > 0xFFF) timeout = 0xFFF;
+         timeout = WDT_MR_WDRSTEN | WDT_MR_WDV(timeout) | WDT_MR_WDD(timeout);
+         WDT_Enable (WDT, timeout);
+      #endif
         // WDT->WDT_MR = WDT_MR_WDRSTEN | WATCHDOG_INTERVAL | 0x0fff0000;
         // //(WATCHDOG_INTERVAL << 16); WDT->WDT_CR = 0xA5000001;
-        WDT->WDT_CR = 0xA5000001; // reset clock before updating WDD
-        delayMicroseconds(92);    // must wait a minimum of 3 slow clocks before
+        //WDT->WDT_CR = 0xA5000001; // reset clock before updating WDD
+        //delayMicroseconds(92);    // must wait a minimum of 3 slow clocks before
                                   // updating WDT_MR after writing WDT_CR
-        WDT->WDT_MR = WDT_MR_WDRSTEN | WATCHDOG_INTERVAL | (WATCHDOG_INTERVAL << 16);
-        WDT->WDT_CR = 0xA5000001;
+        //WDT->WDT_MR = WDT_MR_WDRSTEN | WATCHDOG_INTERVAL | (WATCHDOG_INTERVAL << 16);
+        //WDT->WDT_CR = 0xA5000001;
     };
     inline static void stopWatchdog() {}
     inline static void pingWatchdog() {

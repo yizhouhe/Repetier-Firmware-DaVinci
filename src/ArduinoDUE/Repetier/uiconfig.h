@@ -111,6 +111,7 @@ Currently supported hardware:
   5 = U8G supported display
   */
   //#define UI_DISPLAY_TYPE 5
+  //Davinci Specific, LCD use 8 bits protocol
   #define UI_DISPLAY_TYPE DISPLAY_8BIT
   
   #if UI_DISPLAY_TYPE == DISPLAY_U8G // Special case for graphic displays
@@ -265,6 +266,7 @@ Currently supported hardware:
   0 = No keys attached - disables also menu
   1 = Some keys attached
   */
+  //Davinci Specific, there is a key pad (6 keys: left, right,up, down, Ok, Menu)
   #undef UI_HAS_KEYS
   #define UI_HAS_KEYS 1
   

@@ -68,15 +68,21 @@ void Extruder::manageTemperatures() {
     if (extrSecondFlag == 10)
         extrSecondFlag = 0;
     Com::writeToAll = true;
-#if FEATURE_WATCHDOG
-    HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
+    #if FEATURE_WATCHDOG
+        HAL::pingWatchdog();
+    #endif // FEATURE_WATCHDOG
     uint8_t errorDetected = 0;
-#ifdef RED_BLUE_STATUS_LEDS
-    bool hot = false;
-#endif
+    #ifdef RED_BLUE_STATUS_LEDS
+        bool hot = false;
+    #endif
     bool newDefectFound = false;
-    millis_t time = HAL::timeInMilliseconds(); // compare time for decouple tests
+    //Davinci Specific, be able to disable decouple test
+    //millis_t time = HAL::timeInMilliseconds(); // compare time for decouple tests
+    #if FEATURE_DECOUPLE_TEST
+        millis_t time = HAL::timeInMilliseconds(); // compare time for decouple tests
+    #endif
+    //end davinci specific
+    
 #if NUM_TEMPERATURE_LOOPS > 0
     for (uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++) {
         TemperatureController* act = tempController[controller];
@@ -155,28 +161,30 @@ void Extruder::manageTemperatures() {
                 EVENT_HEATER_DEFECT(controller);
             }
         }
-#if HAVE_HEATED_BED
-        else if (controller == HEATED_BED_INDEX && Extruder::getHeatedBedTemperature() > HEATED_BED_MAX_TEMP + 5) {
-            errorDetected = 1;
-            if (extruderTempErrors < 10) // Ignore short temporary failures
-                extruderTempErrors++;
-            else {
-                act->flags |= TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
-                Com::printErrorFLN(PSTR("Heated bed exceeded max temperature!"));
-                if (!Printer::isAnyTempsensorDefect()) {
-                    newDefectFound = true;
-                    Printer::setAnyTempsensorDefect();
-                    reportTempsensorError();
-                    UI_MESSAGE(2);
+        #if HAVE_HEATED_BED
+                else if (controller == HEATED_BED_INDEX && Extruder::getHeatedBedTemperature() > HEATED_BED_MAX_TEMP + 5) {
+                    errorDetected = 1;
+                    if (extruderTempErrors < 10) // Ignore short temporary failures
+                        extruderTempErrors++;
+                    else {
+                        act->flags |= TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
+                        Com::printErrorFLN(PSTR("Heated bed exceeded max temperature!"));
+                        if (!Printer::isAnyTempsensorDefect()) {
+                            newDefectFound = true;
+                            Printer::setAnyTempsensorDefect();
+                            reportTempsensorError();
+                            UI_MESSAGE(2);
+                        }
+                        EVENT_HEATER_DEFECT(controller);
+                    }
                 }
-                EVENT_HEATER_DEFECT(controller);
-            }
-        }
-#endif // HAVE_HEATED_BED
-#ifdef RED_BLUE_STATUS_LEDS
-        if (act->currentTemperatureC > 50)
-            hot = true;
-#endif // RED_BLUE_STATUS_LEDS
+        #endif // HAVE_HEATED_BED
+        
+        #ifdef RED_BLUE_STATUS_LEDS
+                if (act->currentTemperatureC > 50)
+                    hot = true;
+        #endif // RED_BLUE_STATUS_LEDS
+        
         if (Printer::isAnyTempsensorDefect())
             continue;
         uint8_t on = act->currentTemperatureC >= act->targetTemperatureC ? LOW : HIGH;
@@ -185,6 +193,9 @@ void Extruder::manageTemperatures() {
             beep(50 * (controller + 1), 3);
             act->setAlarm(false); //reset alarm
         }
+
+//Davinci Specific, be able to disable decouple test
+#if FEATURE_DECOUPLE_TEST
 
         // Run test if heater and sensor are decoupled
         bool decoupleTestRequired = !errorDetected && act->decoupleTestPeriod > 0 && (time - act->lastDecoupleTest) > act->decoupleTestPeriod; // time enough for temperature change?
@@ -238,14 +249,30 @@ void Extruder::manageTemperatures() {
             }
         }
 
+#endif //FEATURE_DECOUPLE_TEST
+//end davinci specific
+
+
         uint8_t output = 0;
         float error = act->targetTemperatureC - act->currentTemperatureC;
         if (act->targetTemperatureC < 20.0f) { // heating is off
             output = 0;                        // off is off, even if damping term wants a heat peak!
-            act->stopDecouple();
+            //Davinci Specific, be able to disable decouple test
+            #if FEATURE_DECOUPLE_TEST
+                        act->stopDecouple();
+            #endif
+            //act->stopDecouple();
+
+            
         } else if (error > PID_CONTROL_RANGE) { // Phase 1: full heating until control range reached
             output = act->pidMax;
-            act->startFullDecouple(time);
+            //Davinci Specific, be able to disable decouple test
+            #if FEATURE_DECOUPLE_TEST
+                        act->startFullDecouple(time);
+            #endif
+            //act->startFullDecouple(time);
+            //end davinci specific
+            
             act->tempIState = act->tempIStateLimitMin;
             if (act->heatManager == HTR_DEADTIME) {
                 act->tempIStateLimitMax = act->pidDriveMax;
@@ -255,7 +282,13 @@ void Extruder::manageTemperatures() {
             output = 0;
         else { // control range handle by heat manager
             if (act->heatManager == HTR_PID) {
-                act->startHoldDecouple(time);
+                //Davinci Specific, be able to disable decouple test
+                #if FEATURE_DECOUPLE_TEST
+                      act->startHoldDecouple(time);
+                #endif
+                //act->startHoldDecouple(time);
+                //end davinci specific
+                
                 // Com::printF(PSTR(" CUR:"),act->currentTemperatureC); Com::printFLN(PSTR(" IST:"),(act->pidIGain * act->tempIState * 0.1),1);
                 float pidTerm = act->pidPGain * error;
                 // Com::printF(PSTR("PID PT:"), pidTerm);
@@ -271,7 +304,13 @@ void Extruder::manageTemperatures() {
 #endif // SCALE_PID_TO_MAX
                 output = constrain((int)pidTerm, 0, act->pidMax);
             } else if (act->heatManager == HTR_DEADTIME) { // dead-time control
-                act->startHoldDecouple(time);
+                //Davinci Specific, be able to disable decouple test
+                #if FEATURE_DECOUPLE_TEST
+                                act->startHoldDecouple(time);
+                #endif
+                //act->startHoldDecouple(time);
+                //end davinci specific
+                
                 // output = (act->currentTemperatureC + act->tempIState * act->deadTime > act->targetTemperatureC ? 0 : act->pidDriveMax);
                 float raising = (act->temperatureC - act->lastTemperatureC); // raising dT/dt from 0.5 seconds
                                                                              // act->tempIState = 0.25 * (3.0 * act->tempIState + raising); // damp raising
@@ -295,21 +334,42 @@ void Extruder::manageTemperatures() {
                 act->tempIState = raising;
             } else                                      // bang bang and slow bang bang
                 if (act->heatManager == HTR_SLOWBANG) { // Bang-bang with reduced change frequency to save relays life
+                    //Davinci Specific, be able to disable decouple test
+                    #if !FEATURE_DECOUPLE_TEST 
+                          uint32_t time = HAL::timeInMilliseconds();
+                    #endif
+                    //end davinci specific
+                  
                 if (time - act->lastTemperatureUpdate > HEATED_BED_SET_INTERVAL) {
                     output = (on ? act->pidMax : 0);
                     act->lastTemperatureUpdate = time;
                     if (on)
                         act->startFullDecouple(time);
                     else
-                        act->stopDecouple();
+                        //Davinci Specific, be able to disable decouple test
+                        #if FEATURE_DECOUPLE_TEST 
+                                                if(on) act->startFullDecouple(time);
+                                                else act->stopDecouple();
+                        #endif
+                        //act->stopDecouple();
+                        //end davinci specific
+                        
                 } else
                     continue;
             } else if (act->heatManager == HTR_OFF) { // Fast Bang-Bang fall back
                 output = (on ? act->pidMax : 0);
-                if (on)
-                    act->startFullDecouple(time);
-                else
-                    act->stopDecouple();
+                //Davinci Specific, be able to disable decouple test
+                #if FEATURE_DECOUPLE_TEST 
+                      if(on) act->startFullDecouple(time);
+                      else act->stopDecouple();
+                #endif
+                                
+                //                if (on)
+                //                    act->startFullDecouple(time);
+                //                else
+                //                   act->stopDecouple();
+                //end davinci specific
+
             }
         } // Temperature control
 #ifdef MAXTEMP
@@ -376,12 +436,17 @@ void TemperatureController::waitForTargetTemperature() {
     Printer::setAutoreportTemp(true);
     //millis_t time = HAL::timeInMilliseconds();
     while (!Printer::failedMode) {
+          //Davinci Specific, STOP request
+          if (Printer::isMenuModeEx(MENU_MODE_STOP_REQUESTED))return;
+          //end davinci specific
+          
         /*if( (HAL::timeInMilliseconds() - time) > 1000 )   //Print Temp Reading every 1 second while heating up.
         {
             Commands::printTemperatures();
             time = HAL::timeInMilliseconds();
         }*/
         Commands::checkForPeriodicalActions(true);
+        
         GCode::keepAlive(WaitHeater);
         if (fabs(targetTemperatureC - currentTemperatureC) <= 1 || Printer::breakLongCommand) {
             Printer::setAutoreportTemp(oldReport);
@@ -987,6 +1052,11 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius, uint8_t ext
     if (temperatureInCelsius < 0) {
         temperatureInCelsius = 0;
     }
+
+    //Davinci Specific, cannot heat during timer but can cooldown
+    if ((temperatureInCelsius > 0)  && (Extruder::disableheat_time >HAL::timeInMilliseconds() )) return;
+    //end davinci specific
+    
 #if SHARED_EXTRUDER_HEATER
     for (fast8_t eid = 0; eid < NUM_EXTRUDER; eid++) {
         TemperatureController* tc = tempController[eid];
@@ -1070,6 +1140,10 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius, uint8_t ext
             }*/
             Commands::checkForPeriodicalActions(true);
             GCode::keepAlive(WaitHeater);
+            //Davinci Specific, STOP management
+            if (Printer::isMenuModeEx(MENU_MODE_STOP_REQUESTED))break;
+            //end davinci specific
+            
             //gcode_read_serial();
 #if RETRACT_DURING_HEATUP
             if (actExtruder == Extruder::current && actExtruder->waitRetractUnits > 0 && !retracted && dirRising && actExtruder->tempControl.currentTemperatureC > actExtruder->waitRetractTemperature) {
@@ -1127,6 +1201,11 @@ void Extruder::setHeatedBedTemperature(float temperatureInCelsius, bool beep) {
         temperatureInCelsius = HEATED_BED_MAX_TEMP;
     if (temperatureInCelsius < 0)
         temperatureInCelsius = 0;
+    
+    //Davinci Specific, cannot heat during timer but can cooldown
+    if ((temperatureInCelsius > 0)  && (Extruder::disableheat_time >HAL::timeInMilliseconds() )) return;
+    //end davinci specific
+    
     if (heatedBedController.targetTemperatureC == temperatureInCelsius)
         return; // don't flood log with messages if killed
     heatedBedController.setTargetTemperature(temperatureInCelsius);
@@ -2645,7 +2724,12 @@ void TemperatureController::setTargetTemperature(float target) {
         target = 0;
     }
     targetTemperatureC = target;
-    stopDecouple();
+    //Davinci Specific, be able to disable decouple test
+    #if FEATURE_DECOUPLE_TEST
+        stopDecouple();
+    #endif
+    //stopDecouple();
+    //end davinci specific
 }
 
 uint8_t autotuneIndex = 255;
@@ -3106,6 +3190,10 @@ const char ext4_deselect_cmd[] PROGMEM = EXT4_DESELECT_COMMANDS;
 const char ext5_select_cmd[] PROGMEM = EXT5_SELECT_COMMANDS;
 const char ext5_deselect_cmd[] PROGMEM = EXT5_DESELECT_COMMANDS;
 #endif
+
+//Davinci Specific, allow cooling but not heating for a period
+millis_t Extruder::disableheat_time =0;
+//end davinci specific
 
 #if NUM_EXTRUDER == 0
 Extruder extruder[1];

@@ -403,7 +403,9 @@ public:
   inline static void resetPathPlanner() {
     linesCount = 0;
     linesPos = linesWritePos;
-    Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
+    //Davinci Specific, no immediate no printing to avoid too many refresh
+        //Printer::setMenuMode(MENU_MODE_PRINTING, false);
+        //Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
   }
   // Only called from bresenham -> inside interrupt handle
   inline void updateAdvanceSteps(speed_t v, uint8_t max_loops,
@@ -567,8 +569,10 @@ public:
 #endif
     HAL::forbidInterrupts();
     --linesCount;
-    if (!linesCount)
-      Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
+    //if (!linesCount)
+
+      //Davinci Specific, no immediate no printing to avoid to many refresh
+      //Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
   }
   static INLINE void pushLine() {
     nextPlannerIndex(linesWritePos);

@@ -682,6 +682,9 @@ void HAL::spiSendBlock(uint8_t token, const uint8_t* buf) {
 }
 #endif
 
+//Davinci Specific
+//#ifdef TWI_CLOCK_FREQ
+
 /****************************************************************************************
  Setting for I2C Clock speed. needed to change  clock speed for different
 peripherals
@@ -1406,7 +1409,11 @@ void PWM_TIMER_VECTOR() {
     UI_FAST; // Short timed user interface action
 #if FEATURE_WATCHDOG
     if (HAL::wdPinged) {
-        WDT->WDT_CR = 0xA5000001;
+        //Davinci Specific
+        //WDT->WDT_CR = 0xA5000001;
+        WDT_Restart (WDT);
+        //end davinci specific
+        
         HAL::wdPinged = false;
     }
 #endif

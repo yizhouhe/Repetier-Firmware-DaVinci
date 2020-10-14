@@ -69,11 +69,21 @@ public:
   float tempIStateLimitMax;
   float tempIStateLimitMin;
   uint8_t flags;
-  millis_t lastDecoupleTest;   ///< Last time of decoupling sensor-heater test
-  float lastDecoupleTemp;      ///< Temperature on last test
-  millis_t decoupleTestPeriod; ///< Time between setting and testing decoupling.
+  
+//Davinci Specific, be able to disable decouple test
+#if FEATURE_DECOUPLE_TEST
+    millis_t lastDecoupleTest;  ///< Last time of decoupling sensor-heater test
+    float  lastDecoupleTemp;  ///< Temperature on last test
+    millis_t decoupleTestPeriod; ///< Time between setting and testing decoupling.
+#endif //FEATURE_DECOUPLE_TEST
+  //millis_t lastDecoupleTest;   ///< Last time of decoupling sensor-heater test
+  //float lastDecoupleTemp;      ///< Temperature on last test
+  //millis_t decoupleTestPeriod; ///< Time between setting and testing decoupling.
+//end davinci specific
+
   millis_t
       preheatStartTime; ///< Time (in milliseconds) when heat up was started
+
   int16_t preheatTemperature;
 #if ENABLED(TEMP_GAIN)
   float tempGain; ///< temperature gets multiplied with this value
@@ -92,9 +102,14 @@ public:
     else
       flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;
   }
-  inline bool isDecoupleFull() {
-    return flags & TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL;
-  }
+  //Davinci Specific, be able to disable decouple test
+  #if FEATURE_DECOUPLE_TEST
+      inline bool isDecoupleFull() {
+          return flags & TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL;
+        }
+  #endif
+//end davinci specific
+  
   inline void removeErrorStates() {
     flags &= ~(TEMPERATURE_CONTROLLER_FLAG_ALARM |
                TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT |
@@ -140,9 +155,16 @@ public:
   inline bool isSensorDefect() {
     return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
   }
-  inline bool isSensorDecoupled() {
-    return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
-  }
+
+  //Davinci Specific, be able to disable decouple test
+  #if FEATURE_DECOUPLE_TEST
+      inline bool isSensorDecoupled()
+      {
+          return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
+      }
+  #endif //FEATURE_DECOUPLE_TEST
+//end davinici specific
+
   static void resetAllErrorStates();
   fast8_t errorState();
   inline bool isFilamentChange() {
@@ -366,6 +388,8 @@ public:
   static void manageTemperatures();
   static void disableCurrentExtruderMotor();
   static void disableAllExtruderMotors();
+
+  
   static void enableCurrentExtruderMotor();
   static void enableAllExtruderMotors();
   static void selectExtruderById(uint8_t extruderId);
@@ -373,6 +397,9 @@ public:
   static void initExtruder();
   static void initHeatedBed();
   static void setHeatedBedTemperature(float temp_celsius, bool beep = false);
+  //Davinci Specific, allow to cool down but not heat for a period
+    static  millis_t disableheat_time;
+    //end davinci specific
   static float getHeatedBedTemperature();
   static void setTemperatureForExtruder(float temp_celsius, uint8_t extr,
                                         bool beep = false, bool wait = false);

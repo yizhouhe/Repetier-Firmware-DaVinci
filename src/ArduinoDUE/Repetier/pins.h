@@ -35,6 +35,11 @@ STEPPER_CURRENT_CONTROL
 #define EEPROM_SPI_ALLIGATOR 2
 #define EEPROM_SDCARD 3
 
+// add to get rid of error message DaVinci specific?
+#define SDA_PIN 20
+#define SCL_PIN 21
+///
+
 #if MOTHERBOARD == 401
 #ifndef __SAM3X8E__
 #error Oops!  Make sure you have 'Arduino Due' selected from the 'Tools -> Boards' menu.
@@ -218,7 +223,12 @@ STEPPER_CURRENT_CONTROL
 #define LED_PIN -1
 #define ORIG_FAN_PIN 9
 #define ORIG_FAN2_PIN 8
-#define ORIG_PS_ON_PIN 40
+
+//Davinci 0 Specific
+#define ORIG_PS_ON_PIN          -1//40
+//#define ORIG_PS_ON_PIN 40
+//end davinci specific
+
 #define KILL_PIN -1
 #define SUICIDE_PIN \
     -1 // PIN that has to be turned on right after start, to keep power flowing.
@@ -2099,10 +2109,7 @@ AD15 CH15
 #define HEATER_PINS_INVERTED 0
 #endif
 
-// add to get rid of error message DaVinci specific?
-#define SDA_PIN 20
-#define SCL_PIN 21
-///
+
 
 // Available chip select pins for HW SPI are 4 10 52
 #if (SDSS == 4) || (SDSS == 10) || (SDSS == 52) || (SDSS == 77)

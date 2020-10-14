@@ -761,6 +761,14 @@ void Printer::kill(uint8_t onlySteppers) {
     if (!onlySteppers)
         disableZStepper();
 #endif
+
+    //Davinci Specific, every axis has a home flag
+    setXHomed(false);
+    setYHomed(false);
+    setZHomed(false);
+    updateHomedAll(); // Clear the homed flag(false);
+    //end davinci specific
+    
     Extruder::disableAllExtruderMotors();
     setAllSteppersDiabled();
     unsetHomedAll();
@@ -1096,7 +1104,15 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode* com) {
 }
 
 void Printer::setup() {
-    HAL::stopWatchdog();
+
+    //Davinci Specific, we start watch dog from begining
+    #if FEATURE_WATCHDOG
+        HAL::startWatchdog();
+        HAL::pingWatchdog();
+    #else
+      HAL::stopWatchdog();
+    #endif // end davinci specific FEATURE_WATCHDOG
+
     for (uint8_t i = 0; i < NUM_PWM; i++)
         pwm_pos[i] = 0;
 #if FEATURE_CONTROLLER == CONTROLLER_VIKI
@@ -1241,6 +1257,30 @@ void Printer::setup() {
 #endif
 #endif
 
+//Davinci Specific, filament sensors
+#if defined(FIL_SENSOR1_PIN)
+SET_INPUT(FIL_SENSOR1_PIN);
+#endif
+#if defined(FIL_SENSOR2_PIN)
+SET_INPUT(FIL_SENSOR2_PIN);
+#endif
+
+#if DAVINCI == 4
+//laser 1
+SET_OUTPUT(LASER1_PIN);
+WRITE(LASER1_PIN, LOW);
+SET_OUTPUT(LED_LASER1_PIN);
+WRITE(LED_LASER1_PIN, LOW);
+//laser 2
+SET_OUTPUT(LASER2_PIN);
+WRITE(LASER2_PIN, LOW);
+SET_OUTPUT(LED_LASER2_PIN);
+WRITE(LED_LASER2_PIN, LOW);
+#endif
+
+//end davinci specific
+
+
 #if defined(DOOR_PIN) && DOOR_PIN > -1
     SET_INPUT(DOOR_PIN);
 #if defined(DOOR_PULLUP) && DOOR_PULLUP
@@ -1373,9 +1413,22 @@ void Printer::setup() {
 #endif // defined
 #if CASE_LIGHTS_PIN >= 0
     SET_OUTPUT(CASE_LIGHTS_PIN);
-    WRITE(CASE_LIGHTS_PIN, CASE_LIGHT_DEFAULT_ON);
-    lightOn = CASE_LIGHT_DEFAULT_ON;
+     //Davinci Specific, we power on lights based on state set in EEPROM 
+    WRITE(CASE_LIGHTS_PIN, EEPROM::buselight);
+    lightOn = EEPROM::buselight;
+    //WRITE(CASE_LIGHTS_PIN, CASE_LIGHT_DEFAULT_ON);
+    //lightOn = CASE_LIGHT_DEFAULT_ON;
+    //end davinci specific
 #endif // CASE_LIGHTS_PIN
+
+//Davinci Specific (AiO)
+#if BADGE_LIGHT_PIN >= 0
+    SET_OUTPUT(BADGE_LIGHT_PIN);
+    //Davinci Specific, we power on lights based on state set in EEPROM 
+    WRITE(BADGE_LIGHT_PIN, EEPROM::buselight & EEPROM::busebadgelight);
+#endif // EEPROM::buselight
+
+
 #if defined(UI_VOLTAGE_LEVEL) && defined(EXP_VOLTAGE_LEVEL_PIN) && EXP_VOLTAGE_LEVEL_PIN > -1
     SET_OUTPUT(EXP_VOLTAGE_LEVEL_PIN);
     WRITE(EXP_VOLTAGE_LEVEL_PIN, UI_VOLTAGE_LEVEL);
@@ -1495,12 +1548,21 @@ void Printer::setup() {
 #if USE_ADVANCE
     extruderStepsNeeded = 0;
 #endif
+
+//Davinci Specific, need read SD EEPROM first
+HAL::setupTimer();
+#if SDSUPPORT
+    sd.mount();
+#endif
+//end davinci specific
+
 #if (MOTHERBOARD == 502)
     SET_INPUT(FTDI_COM_RESET_PIN);
     SET_INPUT(ESP_WIFI_MODULE_COM);
     SET_INPUT(MOTOR_FAULT_PIN);
     SET_INPUT(MOTOR_FAULT_PIGGY_PIN);
 #endif //(MOTHERBOARD == 501) || (MOTHERBOARD == 502)
+
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
     Com::printFLN(Com::tStart);
@@ -1564,6 +1626,14 @@ void Printer::setup() {
         uid.showLanguageSelectionWizard();
     }
 #endif // EEPROM_MODE
+
+//Davinci Specific
+playsound(880,100);
+playsound(1479,150);
+playsound(1174,100);
+playsound(2349,150);
+//end davinci specific
+    
     rescueSetup();
 }
 
@@ -1571,6 +1641,7 @@ void Printer::defaultLoopActions() {
     Commands::checkForPeriodicalActions(true); //check heater every n milliseconds
     UI_MEDIUM;                                 // do check encoder
     millis_t curtime = HAL::timeInMilliseconds();
+    
     if (PrintLine::hasLines() || isMenuMode(MENU_MODE_SD_PRINTING + MENU_MODE_PAUSED))
         previousMillisCmd = curtime;
     else {
@@ -1753,7 +1824,8 @@ void Printer::homeAxis(bool xaxis, bool yaxis, bool zaxis) { // Delta homing cod
     moveToReal(0, 0, Printer::zLength - zBedOffset, IGNORE_COORDINATE, homingFeedrate[Z_AXIS]); // Move to designed coordinates including translation
     updateCurrentPosition(true);
     updateHomedAll();
-    UI_CLEAR_STATUS
+    //Davinci Specific
+    //UI_CLEAR_STATUS
     Commands::printCurrentPosition();
     setAutolevelActive(autoLevel);
 #if defined(SUPPORT_LASER) && SUPPORT_LASER
@@ -2455,7 +2527,12 @@ void Printer::setCaseLight(bool on) {
 #if CASE_LIGHTS_PIN > -1
     WRITE(CASE_LIGHTS_PIN, on);
     lightOn = on;
+    //Davinci Specific, powersave function
+    #if UI_AUTOLIGHTOFF_AFTER!=0
+        if (on)UIDisplay::ui_autolightoff_time=HAL::timeInMilliseconds()+EEPROM::timepowersaving;
+    #endif
     reportCaseLightStatus();
+
 #endif
 }
 

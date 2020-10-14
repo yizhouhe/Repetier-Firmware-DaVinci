@@ -1700,7 +1700,91 @@ bool UIMenuEntry::showEntry() const {
                     addFloat(Printer::zBedOffset, 3, 2);
                     break;
                 }
+        //Davinci Specific,
+        if(c2=='1') //heat PLA
+                {
+                        bool allheat=true;
+                        if(extruder[0].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_pla)allheat=false;
+                       #if NUM_EXTRUDER>1
+                        if(extruder[1].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_pla)allheat=false;
+                        #endif
+                       #if NUM_EXTRUDER>2
+                        if(extruder[2].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_pla)allheat=false;
+                        #endif
+                        #if HAVE_HEATED_BED==true
+                        if(heatedBedController.targetTemperatureC!=EEPROM::ftemp_bed_pla)allheat=false;
+                        #endif
+                        addStringP(allheat?"\003":"\004");
+                }
+        else if(c2=='2') //heat ABS
+                {
+                    bool allheat=true;
+                    if(extruder[0].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_abs)allheat=false;
+                   #if NUM_EXTRUDER>1
+                    if(extruder[1].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_abs)allheat=false;
+                    #endif
+                   #if NUM_EXTRUDER>2
+                    if(extruder[2].tempControl.targetTemperatureC!=EEPROM::ftemp_ext_abs)allheat=false;
+                    #endif
+                    #if HAVE_HEATED_BED==true
+                    if(heatedBedController.targetTemperatureC!=EEPROM::ftemp_bed_abs)allheat=false;
+                    #endif
+                    addStringP(allheat?"\003":"\004");
+                }
+          else if(c2=='3') //Cooldown
+                {
+                     bool alloff=true;
+                     if(extruder[0].tempControl.targetTemperatureC>0)alloff=false;
+#if NUM_EXTRUDER>1
+                    if(extruder[1].tempControl.targetTemperatureC>0)alloff=false;
+#endif
+#if NUM_EXTRUDER>2
+                     if(extruder[2].tempControl.targetTemperatureC>0)alloff=false;
+#endif
+#if HAVE_HEATED_BED==true
+                    if (heatedBedController.targetTemperatureC>0)alloff=false;
+#endif
+               addStringP(alloff?"\003":"\004");
+                }
+            else if(c2=='4') //Extruder 1 Off
+                {
+                    addStringP(extruder[0].tempControl.targetTemperatureC>0?"\004":"\003");
+                }
+            else if(c2=='5') //Extruder 2 Off
+                {
+                addStringP(extruder[1].tempControl.targetTemperatureC>0?"\004":"\003");
+                }
+             else if(c2=='6') //Extruder 3 Off
+                {
+                addStringP(extruder[2].tempControl.targetTemperatureC>0?"\004":"\003");
+                }
+#if HAVE_HEATED_BED
+             else if(c2=='7') //Bed Off
+                {
+                addStringP(heatedBedController.targetTemperatureC>0?"\004":"\003");
+                }
+#endif
+        break;
+        case 'C':
+            if(c2=='1')
+                {
+                addStringP(uipagedialog[0]);
+                }
+            else if(c2=='2')
+                {
+                addStringP(uipagedialog[1]);
+                }
+            else if(c2=='3')
+                {
+                addStringP(uipagedialog[2]);
+                }
+            else if(c2=='4')
+                {
+                addStringP(uipagedialog[3]);
+                }
                 break;
+              //end davinci specific
+                
             case 'd': // debug boolean
                 if (c2 == 'o')
                     addStringOnOff(Printer::debugEcho());
@@ -1807,6 +1891,14 @@ bool UIMenuEntry::showEntry() const {
                         addStringP(PSTR(" dec "));
                         break;
                     }
+                    //Davinci Specific, be able to disable decouple test
+                    #if FEATURE_DECOUPLE_TEST
+                                    else if(tempController[eid]->isSensorDecoupled())
+                                    {
+                                        addStringP(PSTR(" dec "));
+                                        break;
+                                    }
+                    #endif
                 }
     #if EXTRUDER_JAM_CONTROL
                 if (tempController[eid]->isJammed()) {
@@ -1860,20 +1952,203 @@ bool UIMenuEntry::showEntry() const {
                 break;
     #endif
             case 'f':
-                if (c2 >= 'x' && c2 <= 'z')
-                    addFloat(Printer::maxFeedrate[c2 - 'x'], 5, 0);
-                else if (c2 >= 'X' && c2 <= 'Z')
-                    addFloat(Printer::homingFeedrate[c2 - 'X'], 5, 0);
+             //Davinci Specific, loading settings
+                if(c2 >= 'x' && c2 <= 'z' && ! (c2 == 'l' || c2 == 'u' ||c2 == 'd')) addFloat(Printer::maxFeedrate[c2 - 'x'], 5, 0);
+                else if(c2 >= 'X' && c2 <= 'Z') addFloat(Printer::homingFeedrate[c2 - 'X'], 5, 0);
+                else if(c2 == 'l') addFloat(EEPROM::loading_feed_rate, 5, 0);
+                else if(c2 == 'u') addFloat(EEPROM::unloading_feed_rate, 5, 0);
+                else if(c2 == 'd') addFloat(EEPROM::unloading_loading_distance, 3, 0);
                 break;
+            //Davinci Specific, XYZ Min position
+                case 'H':
+                if(c2 == 'x') addFloat(Printer::xMin,4,2);
+                else if(c2 == 'y') addFloat(Printer::yMin,4,2);
+                else if(c2 == 'z') addFloat(Printer::zMin,4,2);
+                break;
+                //end davinci specific
             case 'i':
                 if (c2 == 's')
                     addInt(stepperInactiveTime / 60000, 3);
                 else if (c2 == 'p')
                     addInt(maxInactiveTime / 60000, 3);
+                    //Davinci Specific, powersave
+                    else if(c2 == 'l') addLong(EEPROM::timepowersaving/60000,3);
+                    //end davinci specific
                 break;
             case 'O': // ops related stuff
                 break;
+//Davinci Specific, XYZ Lenght,Language
+         case 'L':
+             if(c2 == 'x') addFloat(Printer::xLength,4,0);
+             else if(c2 == 'y') addFloat(Printer::yLength,4,0);
+             else if(c2 == 'z') addFloat(Printer::zLength,4,0);
+             //English selected
+             else if ((c2 == '0') && (Com::selectedLanguage ==0 ) )addStringP("\003");
+             //German selected
+             else if ((c2 == '1') && (Com::selectedLanguage ==1 ) )addStringP("\003");
+             //Dutch selected
+             else if ((c2 == '2') && (Com::selectedLanguage ==2 ) )addStringP("\003");
+             //Portuguese selected
+             else if ((c2 == '3') && (Com::selectedLanguage ==3 ) )addStringP("\003");
+             //Italian selected
+             else if ((c2 == '4') && (Com::selectedLanguage ==4 ) )addStringP("\003");
+             //Spanish selected
+             else if ((c2 == '5') && (Com::selectedLanguage ==5 ) )addStringP("\003");
+             //Swedish selected
+             else if ((c2 == '6') && (Com::selectedLanguage ==6 ) )addStringP("\003");
+             //French selected
+             else if ((c2 == '7') && (Com::selectedLanguage ==7 ) )addStringP("\003");
+             //Czech selected
+             else if ((c2 == '8') && (Com::selectedLanguage ==8 ) )addStringP("\003");
+             //Polish selected
+             else if ((c2 == '9') && (Com::selectedLanguage ==9 ) )addStringP("\003");
+             //Turkish selected
+             else if ((c2 == 'a') && (Com::selectedLanguage ==10) )addStringP("\003");
+             //Finnish selected
+             else if ((c2 == 'b') && (Com::selectedLanguage ==11) )addStringP("\003");
+             //Japanese selected
+             else if ((c2 == 'c') && (Com::selectedLanguage ==12) )addStringP("\003");
+         break;
+        case 'l':
+            if(c2 == 'a') addInt(lastAction,4);
+//Davinci Specific, Light management
+#if defined(BADGE_LIGHT_PIN) && BADGE_LIGHT_PIN >= 0
+            else if(c2 == 'b') addStringOnOff(READ(BADGE_LIGHT_PIN));        // Lights on/off
+#endif
+#if defined(CASE_LIGHTS_PIN) && CASE_LIGHTS_PIN >= 0
+            else if(c2 == 'o') addStringOnOff(READ(CASE_LIGHTS_PIN));        // Lights on/off
+//Davinci Specific, Light management
+            else if(c2 == 'k') addStringOnOff(EEPROM::bkeeplighton);        // Keep Lights on/off
+#endif
+#if FEATURE_AUTOLEVEL
+            else if(c2 == 'l') addStringOnOff((Printer::isAutolevelActive()));        // Autolevel on/off
+#endif
+            break;
+        case 'o':
+            if(c2 == 's')
+            {
+#if SDSUPPORT
+                if(sd.sdactive && sd.sdmode)
+                {
+                    addStringP(Com::translatedF(UI_TEXT_PRINT_POS_ID));
+                    float percent;
+                    if(sd.filesize < 2000000) percent = sd.sdpos * 100.0 / sd.filesize;
+                    else percent = (sd.sdpos >> 8) * 100.0 / (sd.filesize >> 8);
+                    addFloat(percent, 3, 1);
+                    if(col < MAX_COLS)
+//Davinci specific
+                        {
+                        uid.printCols[col++] = '%';
+                        uid.printCols[col++] = 0;//to be sure there is a 0 if we use string function
+                        }
+                }
+                else
+#endif
+                    parse(statusMsg, true);
+//Davinci Wifi
+#if ENABLE_WIFI
+                    static char lastmsg[21] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    char currentmsg[21] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    if (HAL::bwifion)
+                      {
+                      strcpy(currentmsg,uid.printCols);
+                      //send only if different than previous and not empty
+                      if (strcmp(lastmsg,currentmsg) != 0 && strlen(statusMsg) > 0)
+                        {
+                        strcpy(lastmsg,currentmsg);
+                        Com::print(Com::tStatus);
+                        Com::printFLN(currentmsg);
+                        }
+                      }
+#endif
+                break;
+            }
+            if(c2 == 'c')
+            {
+                addLong(baudrate, 6);
+                break;
+            }
+            if(c2 == 'e')
+            {
+                if(errorMsg != 0) addStringP((char PROGMEM *)errorMsg);
+                break;
+            }
+            if(c2 == 'B')
+            {
+                addInt((int)PrintLine::linesCount, 2);
+                break;
+            }
+            if(c2 == 'f')
+            {
+                addInt(Printer::extrudeMultiply, 3);
+                break;
+            }
+            if(c2 == 'm')
+            {
+                addInt(Printer::feedrateMultiply, 3);
+                break;
+            }
+            if(c2 == 'n')
+            {
+                addInt(Extruder::current->id + 1, 1);
+                break;
+            }
+#if FEATURE_SERVO > 0 && UI_SERVO_CONTROL > 0
+            if(c2 == 'S')
+            {
+                addInt(servoPosition, 4);
+                break;
+            }
+#endif
+#if FEATURE_BABYSTEPPING
+            if(c2 == 'Y')
+            {
+//                addInt(zBabySteps,0);
+                addFloat((float)zBabySteps * Printer::invAxisStepsPerMM[Z_AXIS], 2, 2);
+                break;
+            }
+#endif
+            // Extruder output level
+            if(c2 >= '0' && c2 <= '9') ivalue = pwm_pos[c2 - '0'];
+#if HAVE_HEATED_BED
+            else if(c2 == 'b') ivalue = pwm_pos[heatedBedController.pwmIndex];
+#endif
+            else if(c2 == 'C') ivalue = pwm_pos[Extruder::current->id];
+            ivalue = (ivalue * 100) / 255;
+            addInt(ivalue, 3);
+            if(col < MAX_COLS)
+                uid.printCols[col++] = '%';
+            break;
+//Davinci Specific, type of menu
+        case 'M':
+            if(c2=='d')
+              {
+                  addStringP((display_mode&ADVANCED_MODE)?Com::translatedF(UI_TEXT_ADVANCED_MODE_ID):Com::translatedF(UI_TEXT_EASY_MODE_ID));
+              }
+            break;
+        case 'N':
+            if(c2=='e')
+              {
+#if NUM_EXTRUDER>1
+                   addInt(Extruder::current->id+1,1);
+#endif
+              }
+        break;
+
+        //end davinci specific
+                
             case 'P':            // Print state related
+ //davinci specific
+                #if DAVINCI == 4
+                  if(c2=='A') addStringOnOff(READ(LASER1_PIN));
+                  else if(c2=='B') addStringOnOff(READ(LASER2_PIN));
+                  else if(c2=='1') addStringOnOff(READ(LED_LASER1_PIN));
+                  else if(c2=='2') addStringOnOff(READ(LED_LASER2_PIN));
+                  else if(c2=='S') addFloat(EEPROM::rotate_speed,2,2);
+                  else
+                #endif
+//end davinci specific
+                
                 if (c2 == 'n') { // print name
                     addString(Printer::printName);
                 } else if (c2 == 'l') {
@@ -1885,6 +2160,8 @@ bool UIMenuEntry::showEntry() const {
                 }
                 break;
             case 'p': // preheat related
+
+
                 if (c2 >= '0' && c2 <= '6') {
                     addInt(extruder[c2 - '0'].tempControl.preheatTemperature, 3, ' ');
     #if HAVE_HEATED_BED
@@ -1895,7 +2172,7 @@ bool UIMenuEntry::showEntry() const {
                     addInt(Extruder::current->tempControl.preheatTemperature, 3, ' ');
                 }
                 break;
-            case 'l':
+ /*           case 'l':
                 if (c2 == 'a')
                     addInt(lastAction, 4);
     #if defined(CASE_LIGHTS_PIN) && CASE_LIGHTS_PIN >= 0
@@ -2003,41 +2280,85 @@ bool UIMenuEntry::showEntry() const {
                 if (col < MAX_COLS)
                     uid.printCols[col++] = '%';
                 break;
+ */
             case 's': // Endstop positions
+
+            //Davinci Specific, sound and sensor
+            if(c2=='1') {
+                #if defined(FIL_SENSOR1_PIN)
+                addStringP(READ(FIL_SENSOR1_PIN)?"\004":"\003");
+                #endif
+            }
+            if(c2=='2') {
+                #if defined(FIL_SENSOR2_PIN)
+                addStringP(READ(FIL_SENSOR2_PIN)?"\004":"\003");
+                #endif
+            }
+            #if FEATURE_BEEPER
+                if(c2=='o')addStringOnOff(HAL::enablesound);        // sound on/off
+            #endif
+            #if defined(FIL_SENSOR1_PIN)
+              if(c2=='f')addStringOnOff(EEPROM::busesensor);        //filament sensors on/off
+            #endif
+            #if defined(TOP_SENSOR_PIN)
+              if(c2=='t')addStringOnOff(EEPROM::btopsensor);        //top sensors on/off
+            #endif
+            //end davinci specific
+            
                 if (c2 == 'x') {
-    #if (X_MIN_PIN > -1) && MIN_HARDWARE_ENDSTOP_X
-                    addStringOnOff(Endstops::xMin());
+                    #if (X_MIN_PIN > -1) && MIN_HARDWARE_ENDSTOP_X
+                    //Davinci Specific
+                    addStringP(Endstops::xMin()?"\003":"\004");
+                    //addStringOnOff(Endstops::xMin());
+                    //end davinci specific
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
                 }
                 if (c2 == 'X')
     #if (X_MAX_PIN > -1) && MAX_HARDWARE_ENDSTOP_X
-                    addStringOnOff(Endstops::xMax());
+                    //Davinci Specific
+                    addStringP(Endstops::xMax()?"\003":"\004");
+                    //addStringOnOff(Endstops::xMax());
+                    //end davinci specific
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
                 if (c2 == 'y')
     #if (Y_MIN_PIN > -1) && MIN_HARDWARE_ENDSTOP_Y
-                    addStringOnOff(Endstops::yMin());
+                    //Davinci Specific
+                    addStringP(Endstops::yMin()?"\003":"\004");
+                    //addStringOnOff(Endstops::yMin());
+                    //end davinci specific
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
                 if (c2 == 'Y')
     #if (Y_MAX_PIN > -1) && MAX_HARDWARE_ENDSTOP_Y
-                    addStringOnOff(Endstops::yMax());
+                    //Davinci Specific
+                    addStringP(Endstops::yMax()?"\003":"\004");
+                    //addStringOnOff(Endstops::yMax());
+                    //end davinci specific
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
                 if (c2 == 'z')
     #if (Z_MIN_PIN > -1) && MIN_HARDWARE_ENDSTOP_Z
-                    addStringOnOff(Endstops::zMin());
+                    //Davinci Specific
+                    addStringP(Endstops::zMin()?"\003":"\004");
+                    //addStringOnOff(Endstops::zMin());
+                    //end davinci specific
+                    
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
                 if (c2 == 'Z')
     #if (Z_MAX_PIN > -1) && MAX_HARDWARE_ENDSTOP_Z
-                    addStringOnOff(Endstops::zMax());
+                    //Davinci Specific
+                    addStringP(Endstops::zMax()?"\003":"\004");
+                    //addStringOnOff(Endstops::zMax());
+                    //end davinci specific
+                    
     #else
                     addStringP(Com::translatedF(UI_TEXT_NA_ID));
     #endif
@@ -2060,6 +2381,16 @@ bool UIMenuEntry::showEntry() const {
                 else
                     addFloat(-Printer::coordinateOffset[c2 - '0'], 4, 0);
                 break;
+            //Davinci Specific, Temperature for Extruder/bed ABS and PLA
+            case 't':
+                if(c2=='1')addFloat(EEPROM::ftemp_ext_abs,3,0 );
+                else if(c2=='2')addFloat(EEPROM::ftemp_ext_pla,3,0 );
+                 #if HAVE_HEATED_BED==true
+                 else if(c2=='3')addFloat(EEPROM::ftemp_bed_abs,3,0 );
+                 else if(c2=='4')addFloat(EEPROM::ftemp_bed_pla,3,0 );
+                 #endif
+            break;
+            //end davinci specific
             case 'U':
                 if (c2 == 't') { // Printing time
     #if EEPROM_MODE
@@ -2244,6 +2575,14 @@ bool UIMenuEntry::showEntry() const {
     #endif
                 break;
             case 'z':
+                //Davinci Specific
+                if(c2=='m')
+                 {
+                 addFloat(Printer::zMin,4,2);
+                 break;
+                 }
+                 //end davinci specific
+             
     #if EEPROM_MODE != 0 && FEATURE_Z_PROBE
                 if (c2 == 'h') { // write z probe height
                     addFloat(EEPROM::zProbeHeight(), 3, 2);
@@ -2269,9 +2608,34 @@ bool UIMenuEntry::showEntry() const {
                     addFloat(Printer::wizardStack[1].f, 0, 1);
                 }
                 break;
-            }
-        }
-        uid.printCols[col] = 0;
+        #if FEATURE_Z_PROBE
+        //Davinci Specific, z probe display
+            case 'Z':
+                if(c2=='1' || c2=='2' || c2=='3')
+                    {
+                        int p = c2- '0';
+                        p--;
+                        if (Printer::Z_probe[p] == -1000)
+                            {
+                                addStringP("  --.--- mm");
+                            }
+                        else
+                             if (Printer::Z_probe[p] == -2000)
+                            {
+                                addStringP(Com::translatedF(UI_TEXT_FAILED_ID));
+                            }
+                        else
+                            {
+                                addFloat(Printer::Z_probe[p]-10 ,4,3);
+                                addStringP(" mm");
+                            }
+                      }
+                break;
+          #endif
+          //end davinci specific
+          }
+      }
+      uid.printCols[col] = 0;
     }
     
     void UIDisplay::showLanguageSelectionWizard() {
