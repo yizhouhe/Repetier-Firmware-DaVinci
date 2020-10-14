@@ -492,14 +492,15 @@ FSTRINGVAR(tManualProbeY4)
     FSTRINGVAR(tDirectoryCreated)
     FSTRINGVAR(tCreationFailed)
     FSTRINGVAR(tSDErrorCode)
+
     FSTRINGVAR(tHeaterDecoupled)
     FSTRINGVAR(tHeaterDecoupledWarning)
 
 //Davinci Specific, be able to disable decouple test
-#if FEATURE_DECOUPLE_TEST
-FSTRINGVAR(tHeaterDecoupled)
-FSTRINGVAR(tHeaterDecoupledWarning)
-#endif //end davinci specific FEATURE_DECOUPLE_TEST
+//#if FEATURE_DECOUPLE_TEST
+//FSTRINGVAR(tHeaterDecoupled)
+//FSTRINGVAR(tHeaterDecoupledWarning)
+//#endif //end davinci specific FEATURE_DECOUPLE_TEST
 
     
 #if DISTORTION_CORRECTION

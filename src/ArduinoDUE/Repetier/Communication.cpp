@@ -49,6 +49,32 @@ FSTRINGVALUE(Com::tFirmware,
              " FIRMWARE_URL:" FIRMWARE_URL
              " PROTOCOL_VERSION:1.0 MACHINE_TYPE:" MACHINE_TYPE
              " EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:3")
+
+//Davinci Specific
+FSTRINGVALUE(Com::tReadInput,"Read input: ")
+FSTRINGVALUE(Com::tReset,RESET_IDENTIFIER)
+FSTRINGVALUE(Com::tTempExtABS,"Temp Ext ABS:")
+FSTRINGVALUE(Com::tTempExtPLA,"Temp Ext PLA:")
+FSTRINGVALUE(Com::tTempBedABS,"Temp Bed ABS:")
+FSTRINGVALUE(Com::tTempBedPLA,"Temp Bed PLA:")
+FSTRINGVALUE(Com::tLoadFeedRate,"Load Feed Rate:")
+FSTRINGVALUE(Com::tUnloadFeedRate,"Unload Feed Rate:")
+FSTRINGVALUE(Com::tUnloadLoadDistance,"Unload/Load Distance:")
+FSTRINGVALUE(Com::tKeepLightOn,"Keep Light On:")
+FSTRINGVALUE(Com::tSensorOn,"Filament Sensor On:")
+FSTRINGVALUE(Com::tTopsensorOn,"Top Sensor On:")
+FSTRINGVALUE(Com::tLightOn,"Light On:")
+FSTRINGVALUE(Com::tBadgeLightOn,"Badge On:")
+FSTRINGVALUE(Com::tSoundOn,"Sound On:")
+FSTRINGVALUE(Com::tWifiOn,"Wifi On:")
+FSTRINGVALUE(Com::tPowerSave,"Powersave after [ms,0=off]:")
+FSTRINGVALUE(Com::tDisplayMode,"Display Mode:")
+
+//end davinci specific
+//ESP8266 SPecific
+FSTRINGVALUE(Com::tStatus,"Status:")
+//end esp8266 specific
+
 FSTRINGVALUE(Com::tM999, "Fail mode active. Send M999 to disable failed mode!")
 FSTRINGVALUE(Com::tEmpty, "")
 FSTRINGVALUE(Com::tDebug, "Debug:")
@@ -488,10 +514,10 @@ FSTRINGVALUE(
     "One heater seems decoupled from thermistor - disabling all for safety!")
 
 //Davinci Specific, be able to disable decouple test
-#if FEATURE_DECOUPLE_TEST
-FSTRINGVALUE(Com::tHeaterDecoupled,"Heater decoupled")
-FSTRINGVALUE(Com::tHeaterDecoupledWarning,"One heater seems decoupled from thermistor - disabling all for safety!")
-#endif //FEATURE_DECOUPLE_TEST
+//#if FEATURE_DECOUPLE_TEST
+//FSTRINGVALUE(Com::tHeaterDecoupled,"Heater decoupled")
+//FSTRINGVALUE(Com::tHeaterDecoupledWarning,"One heater seems decoupled from thermistor - disabling all for safety!")
+//#endif //FEATURE_DECOUPLE_TEST
 
 #if DISTORTION_CORRECTION
 FSTRINGVALUE(Com::tZCorrectionEnabled, "Z correction enabled")

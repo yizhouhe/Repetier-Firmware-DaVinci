@@ -452,13 +452,7 @@ static inline float ManualProbeY4() {
 #endif
     }    
 
-    static inline float axisCompTanXY() {
-#if EEPROM_MODE != 0
-        return HAL::eprGetFloat(EPR_AXISCOMP_TANXY);
-#else
-        return AXISCOMP_TANXY;
-#endif
-    }
+
 
 //end davinci specific
     
