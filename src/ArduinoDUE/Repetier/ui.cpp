@@ -2446,8 +2446,8 @@ bool UIMenuEntry::showEntry() const {
     }
 
 
-//Davinci Specific, integrate function in class
-/** write file names at current position to lcd 
+/*Davinci Specific, integrate function in class
+// write file names at current position to lcd 
 void UIDisplay::sdrefresh(uint16_t &r,char cache[UI_ROWS][MAX_COLS+1])
 {
 #if SDSUPPORT
@@ -2501,7 +2501,7 @@ void UIDisplay::sdrefresh(uint16_t &r,char cache[UI_ROWS][MAX_COLS+1])
 }
 */
     
-    /** write file names at current position to lcd */
+// write file names at current position to lcd, replaced by davinci specific 
     void UIDisplay::sdrefresh(uint16_t& r, char cache[UI_ROWS][MAX_COLS + 1]) {
     #if SDSUPPORT
         dir_t* p = NULL;
@@ -2533,6 +2533,14 @@ void UIDisplay::sdrefresh(uint16_t &r,char cache[UI_ROWS][MAX_COLS+1])
             // done if past last used entry
             // skip deleted entry and entries for . and  ..
             // only list subdirectories and files
+
+            //davinci specific
+            #if HIDE_BINARY_ON_SD
+              //hide unwished files
+              if (!SDCard::showFilename(p,tempLongFilename))continue;
+            #endif
+            //end davinci specific
+            
             if (skip > 0) {
                 skip--;
                 file.close();
@@ -2559,6 +2567,7 @@ void UIDisplay::sdrefresh(uint16_t &r,char cache[UI_ROWS][MAX_COLS+1])
     #if defined(UI_HEAD) && UI_DISPLAY_TYPE == DISPLAY_U8G
     FSTRINGVALUE(uiHead, UI_HEAD)
     #endif
+  
     
     // Refresh current menu page
     void UIDisplay::refreshPage() {

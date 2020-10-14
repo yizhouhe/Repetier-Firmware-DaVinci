@@ -400,7 +400,8 @@
 //#include "uilang.h"
 
 //Davinci Specific
-//#define UI_VERSION_STRING "Repetier" REPETIER_VERSION "M"
+#define UI_VERSION_STRING "Repetier" REPETIER_VERSION "M"
+
 //Davinci Specific
 extern void playsound(int tone,int duration);
 
@@ -411,6 +412,7 @@ extern void playsound(int tone,int duration);
 //Davinci Specific, entry ID 
 //#define UI_MENU_TYPE_MODIFICATION_MENU 3
 //#define UI_MENU_TYPE_WIZARD 5
+
 #define UI_MENU_TYPE_HEADLINE 1
 #define UI_MENU_TYPE_ACTION_MENU 3
 #define UI_MENU_TYPE_MODIFICATION_MENU 4
@@ -663,7 +665,7 @@ extern const int8_t encoder_table[16] PROGMEM;
 
 #define UI_STRING(name, text) const char PROGMEM name[] = text
 
-
+//Davinci Specific, for Easy/Advanced feature
 #define UI_PAGE6(name, row1, row2, row3, row4, row5, row6)                                                                \
   UI_STRING(name##_1txt, row1);                                                                                           \
   UI_STRING(name##_2txt, row2);                                                                                           \

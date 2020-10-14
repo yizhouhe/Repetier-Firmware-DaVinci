@@ -1,4 +1,4 @@
-/*
+/*  checked
         This code contibuted by Triffid_Hunter and modified by Kliment
         why double up on these macros? see
    http://gcc.gnu.org/onlinedocs/cpp/Stringification.html 2012/3/10 AT90USB128x

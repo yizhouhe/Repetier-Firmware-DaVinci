@@ -164,21 +164,22 @@ void SDCard::pausePrint(bool intern) {
         return;
     sdmode = 2; // finish running line
     Printer::setMenuMode(MENU_MODE_PAUSED, true);
-#if !defined(DISABLE_PRINTMODE_ON_PAUSE) || DISABLE_PRINTMODE_ON_PAUSE == 1
-    Printer::setPrinting(false);
-#endif
-#if NEW_COMMUNICATION
-    GCodeSource::removeSource(&sdSource);
-#endif
+    #if !defined(DISABLE_PRINTMODE_ON_PAUSE) || DISABLE_PRINTMODE_ON_PAUSE == 1
+        Printer::setPrinting(false);
+    #endif
+    #if NEW_COMMUNICATION
+        GCodeSource::removeSource(&sdSource);
+    #endif
+    
     if (intern) {
         sdmode = 20;
-    } else {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-value"
-        EVENT_SD_PAUSE_START(intern);
-#pragma GCC diagnostic pop
-        EVENT_SD_PAUSE_END(intern);
-    }
+        } else {
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-value"
+                EVENT_SD_PAUSE_START(intern);
+        #pragma GCC diagnostic pop
+                EVENT_SD_PAUSE_END(intern);
+        }
 }
 
 void SDCard::pausePrintPart2() {
@@ -191,10 +192,24 @@ void SDCard::pausePrintPart2() {
                             IGNORE_COORDINATE,
                             Printer::memoryE - RETRACT_ON_PAUSE,
                             Printer::maxFeedrate[E_AXIS] / 2);
+        //Davinci Specific, save extruder ID for DUO
+        #if NUM_EXTRUDER>1
+            Printer::lastextruderID=Extruder::current->id;
+            Extruder::selectExtruderById(0);
+        #endif
+        //end davinci specific
+        
         Printer::moveToParkPosition(false);
         Printer::lastCmdPos[X_AXIS] = Printer::currentPosition[X_AXIS];
         Printer::lastCmdPos[Y_AXIS] = Printer::currentPosition[Y_AXIS];
         Printer::lastCmdPos[Z_AXIS] = Printer::currentPosition[Z_AXIS];
+        
+        //Davinci Specific, save extruder ID for DUO
+        if (Printer::lastCmdPos[Z_AXIS]+10<Printer::zMin+Printer::zLength)
+            Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::lastCmdPos[Z_AXIS]+10,IGNORE_COORDINATE,Printer::homingFeedrate[Z_AXIS]);
+        Printer::moveToReal(Printer::xMin,Printer::yMin,IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
+        //end davinci specific
+        
         GCode::executeFString(PSTR(PAUSE_START_COMMANDS));
     }
     EVENT_SD_PAUSE_END(true);
@@ -205,6 +220,10 @@ void SDCard::continuePrint(bool intern) {
         return;
     if (EVENT_SD_CONTINUE_START(intern)) {
         if (intern) {
+          //Davinci Specific, restore extruder for DUO
+            #if NUM_EXTRUDER>1
+                Extruder::selectExtruderById(Printer::lastextruderID);
+            #endif
             GCode::executeFString(PSTR(PAUSE_END_COMMANDS));
             Printer::GoToMemoryPosition(true, true, false, false,
                                         Printer::maxFeedrate[X_AXIS]);
@@ -215,9 +234,9 @@ void SDCard::continuePrint(bool intern) {
         }
     }
     EVENT_SD_CONTINUE_END(intern);
-#if NEW_COMMUNICATION
-    GCodeSource::registerSource(&sdSource);
-#endif
+    #if NEW_COMMUNICATION
+        GCodeSource::registerSource(&sdSource);
+    #endif
     Printer::setPrinting(true);
     Printer::setMenuMode(MENU_MODE_PAUSED, false);
     sdmode = 1;
@@ -432,6 +451,30 @@ bool SDCard::showFilename(const uint8_t* name) {
         return false;
     return true;
 }
+
+//Davinci Specific, Hide some extension for easy reading and avoid to delete EEPROM
+ #if HIDE_BINARY_ON_SD
+bool SDCard::showFilename(dir_t *p,const char *filename)
+{
+  int slen;
+    char file_extension[4];
+    file_extension[0]=0;
+  if(DIR_IS_FILE(p)&& filename!=NULL)
+            {
+            slen=strlen(filename);
+            if (slen>3)strcpy(file_extension,&filename[slen-3]);
+            else
+              file_extension[0]=0;
+            //check extension 
+            if ((strcasecmp(file_extension,"bin")==0) //all .bin
+            || (strcasecmp(file_extension,"dat")==0)  //all .dat
+            || (strcasecmp(file_extension,"hex")==0)  //all .hex
+            ||  (strchr(filename,'.')==NULL)) return false; //all file without extension
+            }
+    return true;
+}
+#endif
+//END davinci specific
 
 int8_t RFstricmp(const char* s1, const char* s2) {
     while (*s1 && (tolower(*s1) == tolower(*s2)))

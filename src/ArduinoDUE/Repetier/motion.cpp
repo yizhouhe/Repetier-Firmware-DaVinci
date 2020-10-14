@@ -352,12 +352,19 @@ void PrintLine::queueCartesianSegmentTo(uint8_t check_endstops, uint8_t pathOpti
 */
 void PrintLine::queueCartesianMove(uint8_t check_endstops, uint8_t pathOptimize) {
     ENSURE_POWER
-#if LAZY_DUAL_X_AXIS
-    if (Printer::sledParked && (Printer::currentPositionSteps[X_AXIS] != Printer::destinationSteps[X_AXIS] || Printer::currentPositionSteps[Y_AXIS] != Printer::destinationSteps[Y_AXIS] || Printer::currentPositionSteps[Z_AXIS] != Printer::destinationSteps[Z_AXIS]))
-        Printer::sledParked = false;
-#endif
+    
+    //Davinci Specific, STOP request
+    Printer::setMenuMode(MENU_MODE_PRINTING,true);
+    if (Printer::isMenuModeEx(MENU_MODE_STOP_REQUESTED))return;
+    //END davinci specific
+    
+    #if LAZY_DUAL_X_AXIS
+        if (Printer::sledParked && (Printer::currentPositionSteps[X_AXIS] != Printer::destinationSteps[X_AXIS] || Printer::currentPositionSteps[Y_AXIS] != Printer::destinationSteps[Y_AXIS] || Printer::currentPositionSteps[Z_AXIS] != Printer::destinationSteps[Z_AXIS]))
+            Printer::sledParked = false;
+    #endif
     Printer::constrainDestinationCoords();
     Printer::unsetAllSteppersDisabled();
+
 #if DISTORTION_CORRECTION
     if (Printer::distortion.isEnabled() && Printer::destinationSteps[Z_AXIS] < Printer::distortion.zMaxSteps() && Printer::isZProbingActive() == false && !Printer::isHoming()) {
         // we are inside correction height so we split all moves in lines of max. 10 mm and add them
@@ -2390,8 +2397,9 @@ int32_t PrintLine::bresenhamStep() { // Version for delta printer
         // if the probe was already hit.
         if (Printer::isZProbingActive() && Printer::stepsRemainingAtZHit >= 0) {
             removeCurrentLineForbidInterrupt();
-            if (linesCount == 0)
-                UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
+            //Davinci Specific, no immediate IDLE to avoid to many refresh
+            //if (linesCount == 0)
+            //    UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
             return 1000;
         }
 #endif
@@ -2676,7 +2684,8 @@ int32_t PrintLine::bresenhamStep() { // Version for delta printer
         Printer::disableAllowedStepper();
         if (linesCount == 0) {
             if (!Printer::isPrinting()) {
-                UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
+                //Davinci Specific, no immediate IDLE to avoid to many refresh
+                //UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
             }
             if (Printer::mode == PRINTER_MODE_FFF) {
                 Printer::setFanSpeedDirectly(Printer::fanSpeed);
@@ -2710,11 +2719,20 @@ int32_t PrintLine::bresenhamStep() { // Version for delta printer
 int lastblk = -1;
 int32_t cur_errupd;
 int32_t PrintLine::bresenhamStep() { // version for Cartesian printer
-#if CPU_ARCH == ARCH_ARM
-    if (!PrintLine::nlFlag)
-#else
-    if (cur == NULL)
-#endif
+
+    //Davinci Specific, STOP request
+    if (Printer::isMenuModeEx(MENU_MODE_STOP_REQUESTED))
+        {
+        while(linesCount)removeCurrentLineForbidInterrupt();
+        return 100;
+        }
+    //end davinci specific
+    
+    #if CPU_ARCH == ARCH_ARM
+        if (!PrintLine::nlFlag)
+    #else
+        if (cur == NULL)
+    #endif
     {
         setCurrentLine();
         if (cur->isBlocked()) { // This step is in computation - shouldn't happen
@@ -2978,7 +2996,8 @@ int32_t PrintLine::bresenhamStep() { // version for Cartesian printer
         Printer::disableAllowedStepper();
         if (linesCount == 0) {
             if (!Printer::isPrinting()) {
-                UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
+                //Davinci Specific, no immediate IDLE to avoid to many refresh
+                //UI_STATUS_F(Com::translatedF(UI_TEXT_IDLE_ID));
             }
             if (Printer::mode == PRINTER_MODE_FFF) {
                 Printer::setFanSpeedDirectly(Printer::fanSpeed);
