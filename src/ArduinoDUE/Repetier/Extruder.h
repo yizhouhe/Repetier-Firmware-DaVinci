@@ -392,7 +392,12 @@ public:
   
   static void enableCurrentExtruderMotor();
   static void enableAllExtruderMotors();
-  static void selectExtruderById(uint8_t extruderId);
+  
+  //Davinci Specific, be able to not move extruder if Duo
+    static void selectExtruderById(uint8_t extruderId, bool changepos=true);
+  //static void selectExtruderById(uint8_t extruderId);
+  //end davinci specific
+  
   static void disableAllHeater();
   static void initExtruder();
   static void initHeatedBed();

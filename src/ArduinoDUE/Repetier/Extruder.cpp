@@ -774,24 +774,25 @@ void TemperatureController::updateTempControlVars() {
 
 This function changes and initializes a new extruder. This is also called, after the eeprom values are changed.
 */
-void Extruder::selectExtruderById(uint8_t extruderId) {
+void Extruder::selectExtruderById(uint8_t extruderId, bool changepos) {
     float cx, cy, cz;
     Printer::realPosition(cx, cy, cz);
-#if DUAL_X_AXIS && FEATURE_DITTO_PRINTING
-    if (dittoMode != 0) // In ditto mode only extruder 0 is usable and gets set by selecting ditto mode
-        return;
-#endif
+    #if DUAL_X_AXIS && FEATURE_DITTO_PRINTING
+        if (dittoMode != 0) // In ditto mode only extruder 0 is usable and gets set by selecting ditto mode
+            return;
+    #endif
+    
 #if NUM_EXTRUDER > 0
     Commands::waitUntilEndOfAllMoves();
-#if MIXING_EXTRUDER
-    if (extruderId >= VIRTUAL_EXTRUDER)
+    #if MIXING_EXTRUDER
+        if (extruderId >= VIRTUAL_EXTRUDER)
+            extruderId = 0;
+        activeMixingExtruder = extruderId;
+        for (uint8_t i = 0; i < NUM_EXTRUDER; i++)
+            Extruder::setMixingWeight(i, extruder[i].virtualWeights[extruderId]);
+        Com::printFLN(PSTR("SelectExtruder:"), static_cast<int>(extruderId));
         extruderId = 0;
-    activeMixingExtruder = extruderId;
-    for (uint8_t i = 0; i < NUM_EXTRUDER; i++)
-        Extruder::setMixingWeight(i, extruder[i].virtualWeights[extruderId]);
-    Com::printFLN(PSTR("SelectExtruder:"), static_cast<int>(extruderId));
-    extruderId = 0;
-#endif
+    #endif
     if (extruderId >= NUM_EXTRUDER) {
         extruderId = 0;
     }
@@ -799,84 +800,85 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
     Extruder* next = &extruder[extruderId];
     bool executeSelect = extruderId != current->id;
 
-#if RAISE_Z_ON_TOOLCHANGE > 0
-    float lastZ = Printer::lastCmdPos[Z_AXIS];
-    bool raiseZ = true;
-#endif
+    #if RAISE_Z_ON_TOOLCHANGE > 0
+        float lastZ = Printer::lastCmdPos[Z_AXIS];
+        bool raiseZ = true;
+    #endif
 
-#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0 && RAISE_Z_ON_TOOLCHANGE
-    if (current->isLeftCarriage()) {
-        if (Printer::currentPositionSteps[X_AXIS] == Printer::xMinSteps) {
+    #if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0 && RAISE_Z_ON_TOOLCHANGE
+        if (current->isLeftCarriage()) {
+            if (Printer::currentPositionSteps[X_AXIS] == Printer::xMinSteps) {
+                raiseZ = false;
+            }
+        } else if (Printer::currentPositionSteps[X_AXIS] == Printer::xMaxSteps) {
             raiseZ = false;
         }
-    } else if (Printer::currentPositionSteps[X_AXIS] == Printer::xMaxSteps) {
-        raiseZ = false;
-    }
-#endif
+    #endif
 
-#if DUAL_X_AXIS
-    float lastX = Printer::lastCmdPos[X_AXIS];
-    float lastY = Printer::lastCmdPos[Y_AXIS];
-    // Park current extruder
-    int32_t dualXPosSteps = Printer::currentPositionSteps[X_AXIS] - Printer::xMinSteps; // here the extruder should be (steps from xmin pos)
-#endif
-#if !MIXING_EXTRUDER
-    Com::printFLN(PSTR("SelectExtruder:"), static_cast<int>(extruderId));
-#endif
+    #if DUAL_X_AXIS
+        float lastX = Printer::lastCmdPos[X_AXIS];
+        float lastY = Printer::lastCmdPos[Y_AXIS];
+        // Park current extruder
+        int32_t dualXPosSteps = Printer::currentPositionSteps[X_AXIS] - Printer::xMinSteps; // here the extruder should be (steps from xmin pos)
+    #endif
+    
+    #if !MIXING_EXTRUDER
+        Com::printFLN(PSTR("SelectExtruder:"), static_cast<int>(extruderId));
+    #endif
 
-#if NUM_EXTRUDER > 1 && MIXING_EXTRUDER == 0
-    if (executeSelect) {
-        GCode::executeFString(Extruder::current->deselectCommands);
-    }
-    Commands::waitUntilEndOfAllMoves();
-#endif
+    #if NUM_EXTRUDER > 1 && MIXING_EXTRUDER == 0
+        if (executeSelect) {
+            GCode::executeFString(Extruder::current->deselectCommands);
+        }
+        Commands::waitUntilEndOfAllMoves();
+    #endif
 
     float oldfeedrate = Printer::feedrate;
     current->extrudePosition = Printer::currentPositionSteps[E_AXIS];
 
-#if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
-    if (executeSelect && Printer::isZHomed() && raiseZ) {
-        PrintLine::moveRelativeDistanceInSteps(0, 0, static_cast<int32_t>(RAISE_Z_ON_TOOLCHANGE * Printer::axisStepsPerMM[Z_AXIS]), 0, Printer::homingFeedrate[Z_AXIS], true, false);
-    }
-#endif
+    #if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
+        if (executeSelect && Printer::isZHomed() && raiseZ) {
+            PrintLine::moveRelativeDistanceInSteps(0, 0, static_cast<int32_t>(RAISE_Z_ON_TOOLCHANGE * Printer::axisStepsPerMM[Z_AXIS]), 0, Printer::homingFeedrate[Z_AXIS], true, false);
+        }
+    #endif
 
-#if DUAL_X_AXIS
-#if LAZY_DUAL_X_AXIS
-    if (Printer::sledParked) {
-        dualXPosSteps = Printer::lastCmdPos[X_AXIS] * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be
-    }
-#endif // LAZY_DUAL_X_AXIS
-    if (Printer::isXHomed() && executeSelect
-#if LAZY_DUAL_X_AXIS
-        && !Printer::sledParked
-#endif
-    ) { // park extruder that will become inactive
-        bool oldDestCheck = Printer::isNoDestinationCheck();
-        Printer::setNoDestinationCheck(true);
-#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
-        if (current->isLeftCarriage())
-            PrintLine::moveRelativeDistanceInSteps(Printer::xMinSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-        else
-            PrintLine::moveRelativeDistanceInSteps(Printer::xMaxSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-#else
-        PrintLine::moveRelativeDistanceInSteps(current->xOffset - dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-#endif
-        Printer::setNoDestinationCheck(oldDestCheck);
-#if LAZY_DUAL_X_AXIS
-        Printer::sledParked = true;
-#endif
-    }
-#endif
+    #if DUAL_X_AXIS
+        #if LAZY_DUAL_X_AXIS
+            if (Printer::sledParked) {
+                dualXPosSteps = Printer::lastCmdPos[X_AXIS] * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be
+            }
+        #endif // LAZY_DUAL_X_AXIS
+        if (Printer::isXHomed() && executeSelect
+            #if LAZY_DUAL_X_AXIS
+                    && !Printer::sledParked
+            #endif
+        ) { // park extruder that will become inactive
+            bool oldDestCheck = Printer::isNoDestinationCheck();
+            Printer::setNoDestinationCheck(true);
+            #if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+                    if (current->isLeftCarriage())
+                        PrintLine::moveRelativeDistanceInSteps(Printer::xMinSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+                    else
+                        PrintLine::moveRelativeDistanceInSteps(Printer::xMaxSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+            #else
+                    PrintLine::moveRelativeDistanceInSteps(current->xOffset - dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+            #endif
+            Printer::setNoDestinationCheck(oldDestCheck);
+            #if LAZY_DUAL_X_AXIS
+                    Printer::sledParked = true;
+            #endif
+        }
+    #endif
 
     if (Printer::isHomedAll() && next->zOffset < current->zOffset) { // prevent extruder from hitting bed - move bed down a bit
         Printer::offsetZ = -next->zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
         Printer::setNoDestinationCheck(true);
-#if LAZY_DUAL_X_AXIS && DUAL_X_AXIS
-        Printer::moveToReal((Printer::xMinSteps + current->xOffset) * Printer::invAxisStepsPerMM[X_AXIS], IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
-        Printer::sledParked = true;
-#else
-        Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
-#endif
+        #if LAZY_DUAL_X_AXIS && DUAL_X_AXIS
+                Printer::moveToReal((Printer::xMinSteps + current->xOffset) * Printer::invAxisStepsPerMM[X_AXIS], IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+                Printer::sledParked = true;
+        #else
+                Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+        #endif
         Printer::setNoDestinationCheck(false);
         Commands::waitUntilEndOfAllMoves();
         Printer::updateCurrentPosition(true);
@@ -885,138 +887,150 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
     Extruder::current = next;
     // --------------------- Now new extruder is active --------------------
 
-#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
-    if (next->isLeftCarriage()) { //left carriage
-        Printer::xMin = Printer::x1Min;
-        Printer::xLength = Printer::x1Length;
-    } else { //right carriage
-        Printer::xMin = 0.0f;
-        Printer::xLength = (Extruder::current->xOffset / Printer::axisStepsPerMM[X_AXIS]) - Printer::xMin;
-    }
-    Printer::updateDerivedParameter(); // adjust to new xmin/xlength
-#endif
+    #if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+        if (next->isLeftCarriage()) { //left carriage
+            Printer::xMin = Printer::x1Min;
+            Printer::xLength = Printer::x1Length;
+        } else { //right carriage
+            Printer::xMin = 0.0f;
+            Printer::xLength = (Extruder::current->xOffset / Printer::axisStepsPerMM[X_AXIS]) - Printer::xMin;
+        }
+        Printer::updateDerivedParameter(); // adjust to new xmin/xlength
+    #endif
 
-#if DUAL_X_RESOLUTION
-    Printer::updateDerivedParameter(); // adjust to new resolution
-    // dualXPosSteps = Printer::lastCmdPos[X_AXIS] * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be in new coordinates
-    dualXPosSteps = cx * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be in new coordinates
-#endif
-#ifdef SEPERATE_EXTRUDER_POSITIONS
-    // Use separate extruder positions only if being told. Slic3r e.g. creates a continuous extruder position increment
-    Printer::currentPositionSteps[E_AXIS] = Extruder::current->extrudePosition;
-#endif
-#if MIXING_EXTRUDER
-    recomputeMixingExtruderSteps();
-#else
-    Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS];
-    Printer::axisStepsPerMM[E_AXIS] = Extruder::current->stepsPerMM;
-    Printer::invAxisStepsPerMM[E_AXIS] = 1.0f / Printer::axisStepsPerMM[E_AXIS];
-#endif
+    #if DUAL_X_RESOLUTION
+        Printer::updateDerivedParameter(); // adjust to new resolution
+        // dualXPosSteps = Printer::lastCmdPos[X_AXIS] * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be in new coordinates
+        dualXPosSteps = cx * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be in new coordinates
+    #endif
+    
+    #ifdef SEPERATE_EXTRUDER_POSITIONS
+        // Use separate extruder positions only if being told. Slic3r e.g. creates a continuous extruder position increment
+        Printer::currentPositionSteps[E_AXIS] = Extruder::current->extrudePosition;
+    #endif
+
+    #if MIXING_EXTRUDER
+        recomputeMixingExtruderSteps();
+    #else
+        Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS];
+        Printer::axisStepsPerMM[E_AXIS] = Extruder::current->stepsPerMM;
+        Printer::invAxisStepsPerMM[E_AXIS] = 1.0f / Printer::axisStepsPerMM[E_AXIS];
+    #endif
+    
     Printer::destinationPositionTransformed[E_AXIS] = Printer::currentPositionTransformed[E_AXIS] = Printer::currentPositionSteps[E_AXIS] * Printer::invAxisStepsPerMM[E_AXIS];
     Printer::maxFeedrate[E_AXIS] = Extruder::current->maxFeedrate;
     //   max_start_speed_units_per_second[E_AXIS] = Extruder::current->maxStartFeedrate;
     Printer::maxAccelerationMMPerSquareSecond[E_AXIS] = Printer::maxTravelAccelerationMMPerSquareSecond[E_AXIS] = next->maxAcceleration;
     Printer::maxTravelAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxPrintAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxAccelerationMMPerSquareSecond[E_AXIS] * Printer::axisStepsPerMM[E_AXIS];
-#if USE_ADVANCE
-    Printer::maxExtruderSpeed = (ufast8_t)floor(HAL::maxExtruderTimerFrequency() / (Extruder::current->maxFeedrate * next->stepsPerMM));
-#if CPU_ARCH == ARCH_ARM
-    if (Printer::maxExtruderSpeed > 40)
-        Printer::maxExtruderSpeed = 40;
-#else
-    if (Printer::maxExtruderSpeed > 15)
-        Printer::maxExtruderSpeed = 15;
-#endif
-    float fmax = ((float)HAL::maxExtruderTimerFrequency() / ((float)Printer::maxExtruderSpeed * Printer::axisStepsPerMM[E_AXIS])); // Limit feedrate to interrupt speed
-    if (fmax < Printer::maxFeedrate[E_AXIS])
-        Printer::maxFeedrate[E_AXIS] = fmax;
-#endif // USE_ADVANCE
+    #if USE_ADVANCE
+        Printer::maxExtruderSpeed = (ufast8_t)floor(HAL::maxExtruderTimerFrequency() / (Extruder::current->maxFeedrate * next->stepsPerMM));
+        #if CPU_ARCH == ARCH_ARM
+            if (Printer::maxExtruderSpeed > 40)
+                Printer::maxExtruderSpeed = 40;
+        #else
+            if (Printer::maxExtruderSpeed > 15)
+                Printer::maxExtruderSpeed = 15;
+        #endif
+        float fmax = ((float)HAL::maxExtruderTimerFrequency() / ((float)Printer::maxExtruderSpeed * Printer::axisStepsPerMM[E_AXIS])); // Limit feedrate to interrupt speed
+        if (fmax < Printer::maxFeedrate[E_AXIS])
+            Printer::maxFeedrate[E_AXIS] = fmax;
+    #endif // USE_ADVANCE
     Extruder::current->tempControl.updateTempControlVars();
-#if DUAL_X_AXIS
-    // Unpark new current extruder
-    if (executeSelect) { // Run only when changing
-        Commands::waitUntilEndOfAllMoves();
-        Printer::updateCurrentPosition(true); // does not update x in lazy mode!
-        GCode::executeFString(next->selectCommands);
-    }
-#if LAZY_DUAL_X_AXIS == 0
-    if (executeSelect) {
-        Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset - dualXPosSteps;
-        if (Printer::isXHomed()) {
-#if DUAL_X_AXIS_MODE > 0
-            if (next->isLeftCarriage()) //left carriage
-                Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps;
-            else //right carriage
-                Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset;
-            Printer::offsetX = 0;
-            Printer::updateCurrentPosition(false);
-            Printer::lastCmdPos[X_AXIS] = lastX;
-
-            if (Printer::isPositionAllowed(lastX, Printer::currentPosition[Y_AXIS], Printer::currentPosition[Z_AXIS]))
-                PrintLine::moveRelativeDistanceInSteps(lroundf(lastX * Printer::axisStepsPerMM[X_AXIS]) - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-#else
-            PrintLine::moveRelativeDistanceInSteps(-next->xOffset + dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-            Printer::currentPositionSteps[X_AXIS] = dualXPosSteps + Printer::xMinSteps;
-#endif
-        }
-    }
-#endif // LAZY_DUAL_X_AXIS == 0
-    Printer::offsetX = 0;
-    Printer::updateCurrentPosition(false);
-#if LAZY_DUAL_X_AXIS
-    if (executeSelect) {
-        if (Printer::isHomedAll()) { // prevent extruder from hitting bed - move bed down a bit
-            Printer::offsetZ = -next->zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
-            Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps + next->xOffset;
-            Printer::sledParked = false;
-            Printer::updateCurrentPosition(true);
-            Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, cz, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
-            Printer::sledParked = true;
+    #if DUAL_X_AXIS
+        // Unpark new current extruder
+        if (executeSelect) { // Run only when changing
             Commands::waitUntilEndOfAllMoves();
-            Printer::updateCurrentPosition(true);
+            Printer::updateCurrentPosition(true); // does not update x in lazy mode!
+            GCode::executeFString(next->selectCommands);
         }
-        Printer::currentPosition[X_AXIS] = Printer::lastCmdPos[X_AXIS] = lastX;
-        Printer::lastCmdPos[Y_AXIS] = lastY;
-        Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps + next->xOffset;
-    }
-#endif // LAZY_DUAL_X_AXIS
-    executeSelect = false;
-    Printer::lastCmdPos[X_AXIS] = lastX;
-#else // DUAL_X_AXIS
-    Printer::offsetX = -next->xOffset * Printer::invAxisStepsPerMM[X_AXIS];
-#endif
+        #if LAZY_DUAL_X_AXIS == 0
+            if (executeSelect) {
+                Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset - dualXPosSteps;
+                if (Printer::isXHomed()) {
+                    #if DUAL_X_AXIS_MODE > 0
+                                if (next->isLeftCarriage()) //left carriage
+                                    Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps;
+                                else //right carriage
+                                    Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset;
+                                Printer::offsetX = 0;
+                                Printer::updateCurrentPosition(false);
+                                Printer::lastCmdPos[X_AXIS] = lastX;
+                    
+                                if (Printer::isPositionAllowed(lastX, Printer::currentPosition[Y_AXIS], Printer::currentPosition[Z_AXIS]))
+                                    PrintLine::moveRelativeDistanceInSteps(lroundf(lastX * Printer::axisStepsPerMM[X_AXIS]) - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+                    #else
+                                PrintLine::moveRelativeDistanceInSteps(-next->xOffset + dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+                                Printer::currentPositionSteps[X_AXIS] = dualXPosSteps + Printer::xMinSteps;
+                    #endif
+                }
+            }
+        #endif // LAZY_DUAL_X_AXIS == 0
+        Printer::offsetX = 0;
+        Printer::updateCurrentPosition(false);
+    
+        #if LAZY_DUAL_X_AXIS
+            if (executeSelect) {
+                if (Printer::isHomedAll()) { // prevent extruder from hitting bed - move bed down a bit
+                    Printer::offsetZ = -next->zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
+                    Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps + next->xOffset;
+                    Printer::sledParked = false;
+                    Printer::updateCurrentPosition(true);
+                    Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, cz, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+                    Printer::sledParked = true;
+                    Commands::waitUntilEndOfAllMoves();
+                    Printer::updateCurrentPosition(true);
+                }
+                Printer::currentPosition[X_AXIS] = Printer::lastCmdPos[X_AXIS] = lastX;
+                Printer::lastCmdPos[Y_AXIS] = lastY;
+                Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps + next->xOffset;
+            }
+        #endif // LAZY_DUAL_X_AXIS
+        executeSelect = false;
+        Printer::lastCmdPos[X_AXIS] = lastX;
+    #else // DUAL_X_AXIS
+        Printer::offsetX = -next->xOffset * Printer::invAxisStepsPerMM[X_AXIS];
+    #endif
+
     Printer::offsetY = -next->yOffset * Printer::invAxisStepsPerMM[Y_AXIS];
     Printer::offsetZ = -next->zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
     Commands::changeFlowrateMultiply(Printer::extrudeMultiply); // needed to adjust extrusionFactor to possibly different diameter
-#if USE_ADVANCE
-    HAL::resetExtruderDirection();
-#endif // USE_ADVANCE
 
-#if NUM_EXTRUDER > 1 && MIXING_EXTRUDER == 0
-    if (executeSelect) { // Run only when changing
-        Commands::waitUntilEndOfAllMoves();
-        GCode::executeFString(next->selectCommands);
-    }
-#endif
-#if DUAL_X_AXIS == 0 || LAZY_DUAL_X_AXIS == 0
-#if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
-    if (Printer::isZHomed() && raiseZ) {
-        Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, cz, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
-        Printer::lastCmdPos[Z_AXIS] = lastZ;
-    }
-#endif
+    #if USE_ADVANCE
+        HAL::resetExtruderDirection();
+    #endif // USE_ADVANCE
 
-    if (Printer::isHomedAll()) {
-#if (DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0)
-        Printer::moveToReal(IGNORE_COORDINATE, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
-#else
-        Printer::moveToReal(cx, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
-#endif
-    }
-#endif
+    #if NUM_EXTRUDER > 1 && MIXING_EXTRUDER == 0
+        if (executeSelect) { // Run only when changing
+            Commands::waitUntilEndOfAllMoves();
+            GCode::executeFString(next->selectCommands);
+        }
+    #endif
+    
+    #if DUAL_X_AXIS == 0 || LAZY_DUAL_X_AXIS == 0
+
+        #if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
+            if (Printer::isZHomed() && raiseZ) {
+                Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, cz, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+                Printer::lastCmdPos[Z_AXIS] = lastZ;
+            }
+        #endif
+    
+        if (Printer::isHomedAll()) {
+            #if (DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0)
+                    //Davinci Specific, check if move extruder for DUO
+                    Printer::moveToReal(IGNORE_COORDINATE, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
+            #else
+                    Printer::moveToReal(cx, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
+            #endif
+        }
+    #endif
     Printer::feedrate = oldfeedrate;
     Printer::updateCurrentPosition(true);
 #endif
 }
+
+
+
 
 #if MIXING_EXTRUDER
 void Extruder::recomputeMixingExtruderSteps() {

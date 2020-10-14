@@ -1185,7 +1185,10 @@
 // during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed
 #define ENDSTOP_X_RETEST_REDUCTION_FACTOR 3
 #define ENDSTOP_Y_RETEST_REDUCTION_FACTOR 3
-#define ENDSTOP_Z_RETEST_REDUCTION_FACTOR 3
+//Davinci Specific, bad noise if set to 3
+//#define ENDSTOP_Z_RETEST_REDUCTION_FACTOR 3
+#define ENDSTOP_Z_RETEST_REDUCTION_FACTOR 4
+
 
 // When you have several endstops in one circuit you need to disable it after homing by moving a
 // small amount back. This is also the case with H-belt systems.
