@@ -310,11 +310,11 @@
   /** \brief Number of steps for a 1mm move in x direction.
     For xy gantry use 2*belt moved!
     Overridden if EEPROM activated. */
-  #define XAXIS_STEPS_PER_MM 80
+  #define XAXIS_STEPS_PER_MM 160
   /** \brief Number of steps for a 1mm move in y direction.
     For xy gantry use 2*belt moved!
     Overridden if EEPROM activated.*/
-  #define YAXIS_STEPS_PER_MM 80
+  #define YAXIS_STEPS_PER_MM 160
   /** \brief Number of steps for a 1mm move in z direction  Overridden if EEPROM activated.*/
   #define ZAXIS_STEPS_PER_MM 2560
 #endif
@@ -1145,8 +1145,8 @@
 #define INVERT_X_DIR 1
 #define INVERT_X2_DIR 1
 
-#define INVERT_Y_DIR 0
-#define INVERT_Y2_DIR 0
+#define INVERT_Y_DIR 1
+#define INVERT_Y2_DIR 1
 
 #define INVERT_Z_DIR 1
 #define INVERT_Z2_DIR 1
