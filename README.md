@@ -3,7 +3,8 @@
 
 
 Build Status: [Build without error with Arduino IDE]    
-    
+
+Can not mount sd card so far, print from USB and OctoPrint is fine, LCD works, display printer status, but display blank page after press menu.
       
 
 This firmware is based on the popular repetier firmware 1.0.4 and incoprorate changes from LUC's modification to make it work for Da Vinci <B>1.0/A, 2.0 single fan, 2.0/A dual fans and also AiO</B> (NB:scanner function is not supported so AiO will work like an 1.0A)   
